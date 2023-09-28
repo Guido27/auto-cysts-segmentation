@@ -1,3 +1,7 @@
+CE_Net:
+  model:
+    type: models.CE_Net_
+    
 pranet:
   model:
     type: models.PraNet
