@@ -1,7 +1,8 @@
 CE_Net:
   model:
     type: models.CE_Net_
-    
+    name: cenet
+
 pranet:
   model:
     type: models.PraNet
