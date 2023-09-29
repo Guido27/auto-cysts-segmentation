@@ -249,8 +249,8 @@ class CE_Net_(nn.Module):
         else:
             loss = 0
         
-        return {'pred': out, 'loss': loss}
-            
+        #return {'pred': out, 'loss': loss}
+        return out   
             
             
 
