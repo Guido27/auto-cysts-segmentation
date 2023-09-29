@@ -1,10 +1,10 @@
 ---
 seed: 1989
 
-num_workers: 16
+num_workers: 2
 experiment_name: "training"
-image_path: "artifacts/dataset:v0/images"
-mask_path: "artifacts/dataset:v0/masks"
+image_path: "artifacts/dataset_imn/images"
+mask_path: "artifacts/dataset_imn/masks"
 val_split: 0.2
 
 model:
