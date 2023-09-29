@@ -123,8 +123,8 @@ class SegmentCyst(pl.LightningModule):
         #    self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
 
         self.log("train_iou", binary_mean_iou(logits, masks))
-        self.log("train_loss", loss)
-        self.log("lr", self._get_current_lr())
+        self.log("train_loss", loss, on_epoch=True)
+        self.log("lr", self._get_current_lr(), on_epoch=True)
         return {"loss": loss}
 
     def _get_current_lr(self) -> torch.Tensor:
