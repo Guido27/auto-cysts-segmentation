@@ -212,5 +212,9 @@ class SegmentCyst(pl.LightningModule):
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
             m = metric(logits, masks.int())
+            
+            #debug
+            print(f'test_metric:{m}')
+
             self.log(f"test_{metric_name}", m, on_step=True, on_epoch=True)
     
