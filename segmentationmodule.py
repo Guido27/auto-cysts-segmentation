@@ -118,10 +118,11 @@ class SegmentCyst(pl.LightningModule):
         # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
         #     self.log_images(features, masks, logits_, batch_idx)
 
-        for metric_name, metric in self.train_metrics.items():
-            metric(logits, masks.int())
-            self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
+        #for metric_name, metric in self.train_metrics.items():
+        #    metric(logits, masks.int())
+        #    self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
 
+        self.log("train_iou", binary_mean_iou(logits, masks))
         self.log("train_loss", loss)
         self.log("lr", self._get_current_lr())
         return {"loss": loss}

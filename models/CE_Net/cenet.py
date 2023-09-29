@@ -237,8 +237,8 @@ class CE_Net_(nn.Module):
         # return out
         #
         # added:
-        if y is not None:
-            loss = self.loss_fn(out,y)
+        #if y is not None:
+        #    loss = self.loss_fn(out,y)
         #    #loss6 = self.loss_fn(out6, y)
         #    loss5 = self.loss_fn(out5, y)
         #    loss4 = self.loss_fn(out4, y)
@@ -246,8 +246,8 @@ class CE_Net_(nn.Module):
         #    loss2 = self.loss_fn(out2, y)
         #    loss1 = self.loss_fn(out, y)
         #    loss = loss1 + loss2 + loss3 + loss4 + loss5 #+ loss6
-        else:
-            loss = 0
+        #else:
+        #    loss = 0
         
         #return {'pred': out, 'loss': loss}
         return out2   
