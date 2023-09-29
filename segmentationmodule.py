@@ -111,6 +111,7 @@ class SegmentCyst(pl.LightningModule):
             logits = logits['pred']
         else:
             logits = self.forward(features)
+            print(f'DEBUG -> {logits.size()}')
             loss = self.loss(logits, masks)
         
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
