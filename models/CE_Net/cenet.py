@@ -233,23 +233,9 @@ class CE_Net_(nn.Module):
         out3 = self.finalrelu2(out4)
         out2 = self.finalconv3(out3)
 
-        out = torch.sigmoid(out2)
-        # return out
-        #
-        # added:
-        #if y is not None:
-        #    loss = self.loss_fn(out,y)
-        #    #loss6 = self.loss_fn(out6, y)
-        #    loss5 = self.loss_fn(out5, y)
-        #    loss4 = self.loss_fn(out4, y)
-        #    loss3 = self.loss_fn(out3, y)
-        #    loss2 = self.loss_fn(out2, y)
-        #    loss1 = self.loss_fn(out, y)
-        #    loss = loss1 + loss2 + loss3 + loss4 + loss5 #+ loss6
-        #else:
-        #    loss = 0
-        
-        #return {'pred': out, 'loss': loss}
+        #SKIP SIGMOID
+        #out = torch.sigmoid(out2)
+        #Why? Because there is no activation function after the final convolution layer in the Segmentation-models-Pytorch Unet implementation
         return out2   
             
             
