@@ -235,16 +235,17 @@ class CE_Net_(nn.Module):
 
         out = torch.sigmoid(out2)
         # return out
-        
+        #
         # added:
         if y is not None:
-            #loss6 = self.loss_fn(out6, y)
-            loss5 = self.loss_fn(out5, y)
-            loss4 = self.loss_fn(out4, y)
-            loss3 = self.loss_fn(out3, y)
-            loss2 = self.loss_fn(out2, y)
-            loss1 = self.loss_fn(out, y)
-            loss = loss1 + loss2 + loss3 + loss4 + loss5 #+ loss6
+            loss = self.loss_fn(out,y)
+        #    #loss6 = self.loss_fn(out6, y)
+        #    loss5 = self.loss_fn(out5, y)
+        #    loss4 = self.loss_fn(out4, y)
+        #    loss3 = self.loss_fn(out3, y)
+        #    loss2 = self.loss_fn(out2, y)
+        #    loss1 = self.loss_fn(out, y)
+        #    loss = loss1 + loss2 + loss3 + loss4 + loss5 #+ loss6
         else:
             loss = 0
         
