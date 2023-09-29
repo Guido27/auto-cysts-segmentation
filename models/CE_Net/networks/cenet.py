@@ -7,6 +7,8 @@ import torch.nn.functional as F
 
 from .backbones.resnet.resnet_factory import get_resnet_backbone
 
+# added
+from .losses.losses import *
 
 from functools import partial
 
@@ -198,7 +200,10 @@ class CE_Net_(nn.Module):
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
-    def forward(self, x):
+        # added
+        self.loss_fn = bce_iou_loss
+
+    def forward(self, x, y=None):
         # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
@@ -220,13 +225,31 @@ class CE_Net_(nn.Module):
         d1 = self.decoder1(d2)
 
 
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out6 = self.finaldeconv1(d1)
+        out5 = self.finalrelu1(out6)
+        out4 = self.finalconv2(out5)
+        out3 = self.finalrelu2(out4)
+        out2 = self.finalconv3(out3)
 
-        return torch.sigmoid(out)
+        out = torch.sigmoid(out2)
+        # return out
+        
+        # added:
+        if y is not None:
+            loss6 = self.loss_fn(out6, y)
+            loss5 = self.loss_fn(out5, y)
+            loss4 = self.loss_fn(out4, y)
+            loss3 = self.loss_fn(out3, y)
+            loss2 = self.loss_fn(out2, y)
+            loss1 = self.loss_fn(out, y)
+            loss = loss1 + loss2 + loss3 + loss4 + loss5 + loss6
+        else:
+            loss = 0
+        
+        return {'pred': out, 'loss': loss}
+            
+            
+            
 
 
 class CE_Net_backbone_DAC_without_atrous(nn.Module):
