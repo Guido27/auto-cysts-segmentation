@@ -72,33 +72,39 @@ class SegmentCyst(pl.LightningModule):
             return self.optimizers, [scheduler]
         return self.optimizers
     
+    #def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+    #    for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
+    #        if isinstance(self.trainer.logger, pl.loggers.tensorboard.TensorBoardLogger):
+    #            # self.trainer.logger.experiment.add_image(f"Image/{batch_idx}_{img_idx}", image, 0)
+    #            self.trainer.logger.experiment.add_image(f"GroundTruth/{batch_idx}_{img_idx}", y_true, 0)
+    #            self.trainer.logger.experiment.add_image(f"Prediction/{batch_idx}_{img_idx}", y_pred, 0)
+    #        elif isinstance(self.trainer.logger, pl.loggers.wandb.WandbLogger):
+    #            img = wandb.Image(
+    #                image,
+    #                masks={
+    #                    "predictions": {
+    #                        "mask_data": y_pred,
+    #                        "class_labels": class_labels,
+    #                    },
+    #                    "groud_truth": {
+    #                        "mask_data": y_true,
+    #                        "class_labels": class_labels,
+    #                    },
+    #                },
+    #            )
+    #            self.logger.experiment.log({"generated_images": [img]}, commit=False)
+    #        else:
+    #            print(f"Printing images in {self.train_images}")
+    #            Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
+    #            Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
+    #            Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+    
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
-            if isinstance(self.trainer.logger, pl.loggers.tensorboard.TensorBoardLogger):
-                # self.trainer.logger.experiment.add_image(f"Image/{batch_idx}_{img_idx}", image, 0)
-                self.trainer.logger.experiment.add_image(f"GroundTruth/{batch_idx}_{img_idx}", y_true, 0)
-                self.trainer.logger.experiment.add_image(f"Prediction/{batch_idx}_{img_idx}", y_pred, 0)
-            elif isinstance(self.trainer.logger, pl.loggers.wandb.WandbLogger):
-                print(f'prediction shape:{y_pred}')
-                img = wandb.Image(
-                    image,
-                    masks={
-                        "predictions": {
-                            "mask_data": y_pred,
-                            "class_labels": class_labels,
-                        },
-                        "groud_truth": {
-                            "mask_data": y_true,
-                            "class_labels": class_labels,
-                        },
-                    },
-                )
-                self.logger.experiment.log({"generated_images": [img]}, commit=False)
-            else:
-                print(f"Printing images in {self.train_images}")
-                Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
-                Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
-                Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+            print(f"Printing images in {self.train_images}")
+            Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
+            Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
+            Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
 
     def on_epoch_start(self):
         self.epoch_start_time.append(time())
