@@ -13,6 +13,10 @@ import numpy as np
 import pandas as pd
 from time import time
 
+#debugging
+import torchvision
+import torchvision.transforms as T
+# end debug
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -101,9 +105,20 @@ class SegmentCyst(pl.LightningModule):
     
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
-            print(f"prediction shape:{y_pred.shape}")
-            print(f'gt_mask shape:{y_true.shape}')
-            print(f'img shape:{image.shape}')
+            
+            transform = T.ToPilImage()
+
+            print(f"\nprediction shape:{y_pred.shape}")
+            transform(y_pred).show()
+            
+            print(f'\ngt_mask shape:{y_true.shape}')
+            transform(y_true).show()
+            
+            print(f'\nimg shape:{image.shape}')
+            transform(image).show()
+
+            
+
             
             #Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
             #Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
