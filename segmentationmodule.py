@@ -103,6 +103,11 @@ class SegmentCyst(pl.LightningModule):
         self.epoch_start_time.append(time())
     
     def training_step(self, batch, batch_idx):
+        #debug
+        print(f'batch_idx:{batch_idx}')
+        print(f'epoch_num:{self.trainer.current_epoch}')
+        #end debug
+
         features = batch["features"]
         masks = batch["masks"]
                 
@@ -119,6 +124,7 @@ class SegmentCyst(pl.LightningModule):
         if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
             #debug
             print("I'm going to call log_images now")
+            # end debug
             self.log_images(features, masks, logits_, batch_idx)
 
         #for metric_name, metric in self.train_metrics.items():
