@@ -118,6 +118,7 @@ class SegmentCyst(pl.LightningModule):
         
         if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
             #debug
+            print(f'Logger:{self.logger}')
             print("I'm going to call log_images now")
             # end debug
             self.log_images(features, masks, logits_, batch_idx)
