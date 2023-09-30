@@ -101,10 +101,13 @@ class SegmentCyst(pl.LightningModule):
     
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
-            print(f"Printing images in {self.train_images}")
-            Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
-            Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
-            Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+            print(f"prediction shape:{y_pred.shape}")
+            print(f'gt_mask shape:{y_true.shape}')
+            print(f'img shape:{image.shape}')
+            
+            #Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
+            #Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
+            #Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
 
     def on_epoch_start(self):
         self.epoch_start_time.append(time())
