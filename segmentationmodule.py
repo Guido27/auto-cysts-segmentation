@@ -79,7 +79,7 @@ class SegmentCyst(pl.LightningModule):
                 self.trainer.logger.experiment.add_image(f"GroundTruth/{batch_idx}_{img_idx}", y_true, 0)
                 self.trainer.logger.experiment.add_image(f"Prediction/{batch_idx}_{img_idx}", y_pred, 0)
             elif isinstance(self.trainer.logger, pl.loggers.wandb.WandbLogger):
-                print(f'prediction shape:{y_pred.size()}')
+                print(f'prediction shape:{y_pred}')
                 img = wandb.Image(
                     image,
                     masks={
