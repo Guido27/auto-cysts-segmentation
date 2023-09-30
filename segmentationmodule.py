@@ -30,6 +30,7 @@ class SegmentCyst(pl.LightningModule):
         self.val_images =  Path(self.hparams.checkpoint_callback["dirpath"]) / "images/val_predictions"
 
         if not self.hparams.discard_res:
+            print("Creating folders for train and validation visualization...")
             self.train_images.mkdir(exist_ok=True, parents=True)
             self.val_images.mkdir(exist_ok=True, parents=True)
          
