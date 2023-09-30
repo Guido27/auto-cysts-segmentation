@@ -40,8 +40,7 @@ def main(args):
     name = "crossval_" + "_".join([f"{hp}_{getattr(args, hp)}" for hp in ["model", "loss", "tube", "exp", "noG_preprocessing", "seed"] if getattr(args, hp, None) is not None])
     
     torch.set_float32_matmul_precision('medium')
-    #debug
-    print(f"DEBUG LOGGER -> {hparams.logger}")
+    
     train(args, hparams, name)
         
     if args.evaluate_exp:
