@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 from time import time
 
+import cv2
+
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -108,10 +110,12 @@ class SegmentCyst(pl.LightningModule):
             print(f'\ngt_mask shape:{y_true.shape}')
             print(f'\nimg shape:{image.shape}')
             
-
-            Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
-            Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
-            Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+            sav = cv2.imwrite(y_pred, self.train_images/f"{batch_idx}_{img_idx}.png")
+            if sav:
+                print("Saved Prediction")
+            #Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
+            #Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
+            #Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
 
     def on_epoch_start(self):
         self.epoch_start_time.append(time())
