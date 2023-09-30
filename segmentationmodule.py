@@ -75,9 +75,6 @@ class SegmentCyst(pl.LightningModule):
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             if isinstance(self.trainer.logger, pl.loggers.tensorboard.TensorBoardLogger):
-                #debug
-                print('I"m log_images -> TENSORBOARD')
-                # end debug
                 # self.trainer.logger.experiment.add_image(f"Image/{batch_idx}_{img_idx}", image, 0)
                 self.trainer.logger.experiment.add_image(f"GroundTruth/{batch_idx}_{img_idx}", y_true, 0)
                 self.trainer.logger.experiment.add_image(f"Prediction/{batch_idx}_{img_idx}", y_pred, 0)
