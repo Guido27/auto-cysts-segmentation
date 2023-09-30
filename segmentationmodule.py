@@ -106,7 +106,7 @@ class SegmentCyst(pl.LightningModule):
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
-            transform = T.ToPilImage()
+            transform = T.ToPILImage()
 
             print(f"\nprediction shape:{y_pred.shape}")
             transform(y_pred).show()
