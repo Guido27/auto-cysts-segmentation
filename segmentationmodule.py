@@ -206,7 +206,7 @@ class SegmentCyst(pl.LightningModule):
             name = batch["image_id"][i]
             logits_ = logits[i][0]
 
-            logits_ = (logits_.cpu().numpy() > self.hparams.test_parameters['threshold']).astype(np.uint8)
+            #logits_ = (logits_.cpu().numpy() > self.hparams.test_parameters['threshold']).astype(np.uint8)
             Image.fromarray(logits_*255).save(self.hparams.checkpoint_callback['dirpath'] /'result'/'test'/f"{name}.png")
 
         self.timing_result.loc[len(self.timing_result)] = timing
