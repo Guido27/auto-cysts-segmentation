@@ -79,6 +79,7 @@ class SegmentCyst(pl.LightningModule):
                 self.trainer.logger.experiment.add_image(f"GroundTruth/{batch_idx}_{img_idx}", y_true, 0)
                 self.trainer.logger.experiment.add_image(f"Prediction/{batch_idx}_{img_idx}", y_pred, 0)
             elif isinstance(self.trainer.logger, pl.loggers.wandb.WandbLogger):
+                print(f'prediction shape:{y_pred.size()}')
                 img = wandb.Image(
                     image,
                     masks={
@@ -117,10 +118,6 @@ class SegmentCyst(pl.LightningModule):
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
         if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-            #debug
-            print(f'Logger:{self.logger}')
-            print("I'm going to call log_images now")
-            # end debug
             self.log_images(features, masks, logits_, batch_idx)
 
         #for metric_name, metric in self.train_metrics.items():
