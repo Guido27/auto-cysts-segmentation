@@ -94,6 +94,7 @@ class SegmentCyst(pl.LightningModule):
                 )
                 self.logger.experiment.log({"generated_images": [img]}, commit=False)
             else:
+                print(f"Printing images in {self.train_images}")
                 Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
                 Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
                 Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
@@ -206,15 +207,11 @@ class SegmentCyst(pl.LightningModule):
             name = batch["image_id"][i]
             logits_ = logits[i][0]
 
-            #logits_ = (logits_.cpu().numpy() > self.hparams.test_parameters['threshold']).astype(np.uint8)
+            logits_ = (logits_.cpu().numpy() > self.hparams.test_parameters['threshold']).astype(np.uint8)
             Image.fromarray(logits_*255).save(self.hparams.checkpoint_callback['dirpath'] /'result'/'test'/f"{name}.png")
 
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
             m = metric(logits, masks.int())
-            
-            #debug
-            print(f'test_metric:{m}')
-
             self.log(f"test_{metric_name}", m, on_step=True, on_epoch=True)
     
