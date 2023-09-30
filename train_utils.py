@@ -80,7 +80,11 @@ def train(args, hparams, name=None):
     if logger:
         logger.log_hyperparams(hparams)
         # logger.watch(model, log='all', log_freq=1)
-
+    
+    #debug
+    print(f'Logger:{logger}')
+    #end debug 
+    
     if getattr(args, 'seed', None) is not None:
         pl.seed_everything(args.seed)
         
