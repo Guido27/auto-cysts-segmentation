@@ -104,7 +104,8 @@ class SegmentCyst(pl.LightningModule):
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
-            f,(ax1, ax2) = plt.subplots(1,3,figsize = (10,5))
+            f,(ax1, ax2) = plt.subplots(1,2,figsize = (10,5))
+            
 
             ax1.set_title('IMAGE')
             ax1.imshow(image.cpu().permute(1,2,0).squeeze(),cmap = 'gray')
