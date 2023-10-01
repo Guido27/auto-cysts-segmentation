@@ -113,8 +113,8 @@ class SegmentCyst(pl.LightningModule):
             ax2.imshow(y_true.cpu().permute(1,2,0).squeeze(),cmap = 'gray')
 
             ax3.set_title('MODEL OUTPUT')
-            y_pred = (y_pred > 0.5).permute(1,2,0).cpu().detach().numpy().astype("float")
-            ax3.imshow(y_pred.squeeze(),cmap = 'gray')
+            y_pred = (y_pred > 0.5).permute(1,2,0).cpu().detach().numpy().astype(np.uint8)
+            ax3.imshow((y_pred * 255).squeeze(),cmap = 'gray')
     
 
     def on_epoch_start(self):
