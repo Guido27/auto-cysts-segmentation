@@ -117,7 +117,9 @@ class SegmentCyst(pl.LightningModule):
             y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
             ax3.imshow((y_pred * 255),cmap = 'gray')
 
-            fig.savefig(f'batch_idx_{batch_idx}_output.png')
+            Path("check_training").mkdir(parents=True, exist_ok=True)
+            fig.savefig(f'check_training/batch_idx_{batch_idx}_image_idx_{img_idx}.png')
+            
     
 
     def on_epoch_start(self):
