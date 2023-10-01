@@ -111,7 +111,7 @@ class SegmentCyst(pl.LightningModule):
             ax1.imshow(image.cpu().permute(1,2,0).squeeze(),cmap = 'gray')
 
             ax2.set_title('GROUND TRUTH')
-            ax2.imshow((y_true * 255).astype(np.uint8).cpu().permute(1,2,0).squeeze(),cmap = 'gray')
+            ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
             """ ax3.set_title('MODEL OUTPUT')
             y_pred = (y_pred > 0.5).permute(1,2,0).cpu().detach().numpy().astype(np.uint8)
