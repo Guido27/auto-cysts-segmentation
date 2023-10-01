@@ -114,7 +114,7 @@ class SegmentCyst(pl.LightningModule):
             ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
             ax3.set_title('MODEL PREDICTION')
-            y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
+            y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(float)
             ax3.imshow((y_pred * 255),cmap = 'gray')
 
             Path("check_training").mkdir(parents=True, exist_ok=True)
