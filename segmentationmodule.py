@@ -107,7 +107,7 @@ class SegmentCyst(pl.LightningModule):
             fig,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
 
             ax1.set_title('IMAGE')
-            ax1.imshow((image * 255).cpu().permute(1,2,0).numpy().astype(np.unit8))
+            ax1.imshow((image * 255).cpu().permute(1,2,0).numpy().astype(np.uint8))
 
             ax2.set_title('GROUND TRUTH')
             ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
