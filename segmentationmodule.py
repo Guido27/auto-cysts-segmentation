@@ -104,12 +104,13 @@ class SegmentCyst(pl.LightningModule):
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
-            f,(ax1) = plt.subplots(1,1,figsize = (10,5))
+            fig,(ax1) = plt.subplots(1,1,figsize = (10,5))
 
 
             ax1.set_title('IMAGE')
             ax1.imshow((image*255).cpu().permute(1,2,0).squeeze().numpy().astype(np.uint8),cmap = 'gray')
 
+            fig.savefig(f'{batch_idx}.png')
             """ax2.set_title('GROUND TRUTH')
             ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
