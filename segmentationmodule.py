@@ -118,7 +118,8 @@ class SegmentCyst(pl.LightningModule):
             ax3.imshow((y_pred * 255),cmap = 'gray')
 
             Path("check_training").mkdir(parents=True, exist_ok=True)
-            fig.savefig(f'check_training/batch_idx_{batch_idx}_image_idx_{img_idx}.png')
+            
+            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
             
     
 
