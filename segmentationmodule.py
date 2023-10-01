@@ -104,19 +104,20 @@ class SegmentCyst(pl.LightningModule):
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
-            fig,(ax1) = plt.subplots(1,1,figsize = (10,5))
+            fig,(ax1, ax2) = plt.subplots(1,2,figsize = (10,5))
 
 
             ax1.set_title('IMAGE')
-            ax1.imshow((image).cpu().permute(1,2,0).numpy().astype(np.uint8))
+            ax1.imshow(image.cpu().permute(1,2,0).numpy().astype(np.uint8))
 
-            fig.savefig(f'{batch_idx}.png')
-            """ax2.set_title('GROUND TRUTH')
+            ax2.set_title('GROUND TRUTH')
             ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
-            ax3.set_title('MODEL OUTPUT')
+            """ax3.set_title('MODEL OUTPUT')
             y_pred = (y_pred > 0.5).permute(1,2,0).cpu().detach().numpy().astype(np.uint8)
             ax3.imshow((y_pred * 255).squeeze(),cmap = 'gray') """
+
+            fig.savefig(f'{batch_idx}.png')
     
 
     def on_epoch_start(self):
