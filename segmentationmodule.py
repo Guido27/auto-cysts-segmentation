@@ -105,13 +105,13 @@ class SegmentCyst(pl.LightningModule):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
             f,(ax1, ax2) = plt.subplots(1,2,figsize = (10,5))
-            
+
 
             ax1.set_title('IMAGE')
             ax1.imshow(image.cpu().permute(1,2,0).squeeze(),cmap = 'gray')
 
             ax2.set_title('GROUND TRUTH')
-            ax2.imshow(y_true.cpu().permute(1,2,0).squeeze(),cmap = 'gray')
+            ax2.imshow((y_true * 255).cpu().permute(1,2,0).squeeze(),cmap = 'gray')
 
             """ ax3.set_title('MODEL OUTPUT')
             y_pred = (y_pred > 0.5).permute(1,2,0).cpu().detach().numpy().astype(np.uint8)
