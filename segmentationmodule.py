@@ -113,7 +113,8 @@ class SegmentCyst(pl.LightningModule):
             ax2.imshow(y_true.cpu().permute(1,2,0).squeeze(),cmap = 'gray')
 
             ax3.set_title('MODEL OUTPUT')
-            ax3.imshow(y_pred.permute(1,2,0).squeeze(),cmap = 'gray')
+            y_pred = (y_pred > 0.5).permute(1,2,0).cpu().detach().numpy().astype("float")
+            ax3.imshow(y_pred.squeeze(),cmap = 'gray')
     
 
     def on_epoch_start(self):
@@ -134,7 +135,7 @@ class SegmentCyst(pl.LightningModule):
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
         if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-            self.log_images(features, masks, logits_, batch_idx)
+            self.log_images(features, masks, logits, batch_idx)
 
         #for metric_name, metric in self.train_metrics.items():
         #    m = metric(logits, masks.int())
