@@ -106,7 +106,7 @@ class SegmentCyst(pl.LightningModule):
             
             fig,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
 
-
+            print(image)
             ax1.set_title('IMAGE')
             ax1.imshow(image.cpu().permute(1,2,0).numpy())
 
