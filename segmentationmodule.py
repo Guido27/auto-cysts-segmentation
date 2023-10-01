@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 from time import time
 
+import matplotlib.pyplot as plt 
+
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
         super().__init__()
@@ -72,7 +74,7 @@ class SegmentCyst(pl.LightningModule):
             return self.optimizers, [scheduler]
         return self.optimizers
     
-    def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+    """ def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             if isinstance(self.trainer.logger, pl.loggers.tensorboard.TensorBoardLogger):
                 # self.trainer.logger.experiment.add_image(f"Image/{batch_idx}_{img_idx}", image, 0)
@@ -97,7 +99,21 @@ class SegmentCyst(pl.LightningModule):
                 print(f"Printing images in {self.train_images}")
                 Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
                 Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
-                Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+                Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png") """
+    
+    def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+        for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
+            
+            f,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
+
+            ax1.set_title('IMAGE')
+            ax1.imshow(image.permute(1,2,0).squeeze(),cmap = 'gray')
+
+            ax2.set_title('GROUND TRUTH')
+            ax2.imshow(y_true.permute(1,2,0).squeeze(),cmap = 'gray')
+
+            ax3.set_title('MODEL OUTPUT')
+            ax3.imshow(y_pred.permute(1,2,0).squeeze(),cmap = 'gray')
     
 
     def on_epoch_start(self):
