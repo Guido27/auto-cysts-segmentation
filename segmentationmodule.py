@@ -108,7 +108,7 @@ class SegmentCyst(pl.LightningModule):
 
 
             ax1.set_title('IMAGE')
-            ax1.imshow((image*255).cpu().permute(1,2,0).squeeze().numpy().astype(np.uint8))
+            ax1.imshow((image*255).cpu().numpy().astype(np.uint8))
 
             fig.savefig(f'{batch_idx}.png')
             """ax2.set_title('GROUND TRUTH')
