@@ -1,6 +1,6 @@
 CE_Net:
   model:
-    type: models.CE_Net_
+    type: models.CE_Net_OCT
     name: cenet
 
 pranet:
