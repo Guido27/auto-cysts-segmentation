@@ -173,7 +173,7 @@ class DecoderBlock(nn.Module):
 
 
 class CE_Net_(nn.Module):
-    def __init__(self, num_classes=1, num_channels=3, **opt):
+    def __init__(self, num_classes=2, num_channels=3, **opt):
         
         super(CE_Net_, self).__init__()
 
@@ -231,10 +231,10 @@ class CE_Net_(nn.Module):
 
 
         out6 = self.finaldeconv1(d1)
-        #out5 = self.finalrelu1(out6)
-        out4 = self.finalconv2(out6)
-        #out3 = self.finalrelu2(out4)
-        out2 = self.finalconv3(out4)
+        out5 = self.finalrelu1(out6)
+        out4 = self.finalconv2(out5)
+        out3 = self.finalrelu2(out4)
+        out2 = self.finalconv3(out3)
 
         #SKIP SIGMOID
         #out = torch.sigmoid(out2)
