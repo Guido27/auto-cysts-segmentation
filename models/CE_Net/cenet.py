@@ -230,16 +230,27 @@ class CE_Net_(nn.Module):
         d1 = self.decoder1(d2)
 
 
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out5 = self.finaldeconv1(d1)
+        out4 = self.finalrelu1(out5)
+        out3 = self.finalconv2(out4)
+        out2 = self.finalrelu2(out3)
+        out = self.finalconv3(out2)
 
+        if y is not None:
+            loss5 = self.loss_fn(out5, y)
+            loss4 = self.loss_fn(out4, y)
+            loss3 = self.loss_fn(out3, y)
+            loss2 = self.loss_fn(out2, y)
+            loss1 = self.loss_fn(out, y)
+            loss = loss1 + loss2 + loss3 + loss4 + loss5
+        else:
+            loss = 0
+
+        return {'pred': out2, 'loss': loss}
         #SKIP SIGMOID
         #out = torch.sigmoid(out)
         
-        return out
+        #return out
             
             
 
