@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 class dice_loss(nn.Module):
     def __init__(self, batch=True):
