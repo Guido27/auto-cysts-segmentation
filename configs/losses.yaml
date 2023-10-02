@@ -11,4 +11,4 @@ base:
   type: losses.ComboLoss 
 
 dice_loss:
-  type:losses.dice_loss
+  type: losses.dice_loss
