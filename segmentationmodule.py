@@ -135,7 +135,7 @@ class SegmentCyst(pl.LightningModule):
         features = batch["features"]
         masks = batch["masks"]
                 
-        if self.model_name in ['uacanet', 'pranet', 'ce_net_']:
+        if self.model_name in ['uacanet', 'pranet', 'CE_Net_']:
             logits = self.forward(features, masks)
             loss = logits['loss']
             logits = logits['pred']
@@ -166,7 +166,7 @@ class SegmentCyst(pl.LightningModule):
         features = batch["features"]
         masks = batch["masks"]
         
-        if self.model_name in ['uacanet', 'pranet', 'ce_net_']:
+        if self.model_name in ['uacanet', 'pranet', 'CE_Net_']:
             logits = self.forward(features, masks)
             loss = logits['loss'] 
             logits = logits['pred']
