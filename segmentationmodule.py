@@ -142,6 +142,9 @@ class SegmentCyst(pl.LightningModule):
         else:
             logits = self.forward(features)
             loss = self.loss(logits, masks)
+       
+        #debug print
+        print("Model output shape is {logits.shape}")
         
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
@@ -224,7 +227,7 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"]
     
         t0 = time()
-        if self.model_name in ['uacanet', 'pranet', 'ce_net']:
+        if self.model_name in ['uacanet', 'pranet']:
             logits = self.forward(features, masks)
             logits = logits['pred']
         else:
