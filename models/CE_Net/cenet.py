@@ -212,7 +212,7 @@ class CE_Net_(nn.Module):
         # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
-        x = self.firstrelu(x)
+        #x = self.firstrelu(x)
         x = self.firstmaxpool(x)
         e1 = self.encoder1(x)
         e2 = self.encoder2(e1)
@@ -230,16 +230,16 @@ class CE_Net_(nn.Module):
         d1 = self.decoder1(d2)
 
 
-        out6 = self.finaldeconv1(d1)
-        out5 = self.finalrelu1(out6)
-        out4 = self.finalconv2(out5)
-        out3 = self.finalrelu2(out4)
-        out2 = self.finalconv3(out3)
+        out = self.finaldeconv1(d1)
+        #out = self.finalrelu1(out)
+        out = self.finalconv2(out)
+        #out = self.finalrelu2(out)
+        out = self.finalconv3(out)
 
         #SKIP SIGMOID
         #out = torch.sigmoid(out2)
         #Why? Because there is no activation function after the final convolution layer in the Segmentation-models-Pytorch Unet implementation
-        return out2   
+        return out
             
             
 
