@@ -420,10 +420,12 @@ class CE_Net_backbone_inception_blocks(nn.Module):
 
 
 class CE_Net_OCT(nn.Module):
-    def __init__(self, num_classes=1, num_channels=3, **opt):
+    def __init__(self, num_classes=1, num_channels=3,):
         super(CE_Net_OCT, self).__init__()
 
+        if type(opt) == dict: opt = ed(opt)
         filters = [64, 128, 256, 512]
+        
         resnet = models.resnet34(pretrained=True)
         self.firstconv = resnet.conv1
         self.firstbn = resnet.bn1
