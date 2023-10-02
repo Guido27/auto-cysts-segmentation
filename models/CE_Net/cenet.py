@@ -236,17 +236,10 @@ class CE_Net_(nn.Module):
         out3 = self.finalconv2(out4)
         out2 = self.finalrelu2(out3)
         out = self.finalconv3(out2)
-
-        if y is not None:
-            loss = self.loss_fn(out, y)
-        else:
-            loss = 0
-
-        return {'pred': out2, 'loss': loss}
         #SKIP SIGMOID
         #out = torch.sigmoid(out)
         
-        #return out
+        return out
             
             
 
