@@ -102,6 +102,7 @@ class SegmentCyst(pl.LightningModule):
                 Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png") """
     
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+        # logits_ is the output of the last layer of the model
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
             fig,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
