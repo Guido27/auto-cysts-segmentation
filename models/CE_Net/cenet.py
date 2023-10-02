@@ -235,7 +235,7 @@ class CE_Net_(nn.Module):
         out4 = self.finalrelu1(out5)
         out3 = self.finalconv2(out4)
         out2 = self.finalrelu2(out3)
-        out = self.finalconv3(out2)
+        out = torch.sigmoid(self.finalconv3(out2))
 
         if y is not None:
             loss = self.loss_fn(out, y)
