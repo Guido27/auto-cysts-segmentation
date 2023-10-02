@@ -29,3 +29,20 @@ class dice_loss(nn.Module):
         b = self.soft_dice_loss(y_true, y_pred)
         return b
 
+class DiceLoss(nn.Module):
+    def __init__(self):
+        super(DiceLoss, self).__init__()
+
+    def forward(self, input, target):
+        N, H, W = target.size(0), target.size(2), target.size(3)
+        smooth = 1
+
+        input_flat = input.view(N, -1)
+        target_flat = target.view(N, -1)
+
+        intersection = input_flat * target_flat
+
+        loss = 2 * (intersection.sum(1) + smooth) / (input_flat.sum(1) + target_flat.sum(1) + smooth)
+        loss = 1 - loss.sum() / N
+
+        return loss

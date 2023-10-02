@@ -12,3 +12,6 @@ base:
 
 dice_loss:
   type: losses.dice_loss
+
+DiceLoss:
+  type: losses.DiceLoss
