@@ -420,7 +420,7 @@ class CE_Net_backbone_inception_blocks(nn.Module):
 
 
 class CE_Net_OCT(nn.Module):
-    def __init__(self, num_classes=12, num_channels=3):
+    def __init__(self, num_classes=1, num_channels=3, **opt):
         super(CE_Net_OCT, self).__init__()
 
         filters = [64, 128, 256, 512]
