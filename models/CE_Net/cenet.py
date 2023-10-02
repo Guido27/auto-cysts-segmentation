@@ -205,7 +205,8 @@ class CE_Net_(nn.Module):
         #self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalconv2 = nn.Conv2d(32, 1, 3, padding=1)
         self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        #self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        self.finalconv3 = nn.Conv2d(1, num_classes, 3, padding=1)
 
         # added
         self.loss_fn = bce_iou_loss
