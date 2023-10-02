@@ -173,7 +173,7 @@ class DecoderBlock(nn.Module):
 
 
 class CE_Net_(nn.Module):
-    def __init__(self, num_classes=1, num_channels=3, **opt):
+    def __init__(self, num_classes=2, num_channels=3, **opt):
         
         super(CE_Net_, self).__init__()
 
