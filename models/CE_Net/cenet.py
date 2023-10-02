@@ -173,8 +173,11 @@ class DecoderBlock(nn.Module):
 
 
 class CE_Net_(nn.Module):
-    def __init__(self, num_classes=1, num_channels=3):
+    def __init__(self, num_classes=1, num_channels=3, **opt):
+        
         super(CE_Net_, self).__init__()
+
+        if type(opt) == dict: opt = ed(opt)
         
         filters = [64, 128, 256, 512]
         # resnet = models.resnet34(pretrained=True)
