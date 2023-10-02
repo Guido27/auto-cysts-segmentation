@@ -142,9 +142,6 @@ class SegmentCyst(pl.LightningModule):
         else:
             logits = self.forward(features)
             loss = self.loss(logits, masks)
-       
-        #debug print
-        print(f"Model output shape is {logits.shape}")
         
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
