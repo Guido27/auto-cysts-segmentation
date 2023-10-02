@@ -199,14 +199,12 @@ class CE_Net_(nn.Module):
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        #self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 1, 4, 2, 1)
+        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
         self.finalrelu1 = nonlinearity
-        #self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalconv2 = nn.Conv2d(1, 1, 3, padding=1)
+        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
-        #self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
-        self.finalconv3 = nn.Conv2d(1, num_classes, 3, padding=1)
+        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        
 
         # added
         self.loss_fn = bce_iou_loss
@@ -240,12 +238,7 @@ class CE_Net_(nn.Module):
         out = self.finalconv3(out2)
 
         if y is not None:
-            loss5 = self.loss_fn(out5, y)
-            loss4 = self.loss_fn(out4, y)
-            loss3 = self.loss_fn(out3, y)
-            loss2 = self.loss_fn(out2, y)
-            loss1 = self.loss_fn(out, y)
-            loss = loss1 + loss2 + loss3 + loss4 + loss5
+            loss = self.loss_fn(out, y)
         else:
             loss = 0
 
