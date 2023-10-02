@@ -106,18 +106,23 @@ class SegmentCyst(pl.LightningModule):
             
             fig,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
 
+            # image is a float tensor
             ax1.set_title('IMAGE')
+            ax1.axis('off')
             ax1.imshow((image * 255).cpu().permute(1,2,0).numpy().astype(np.uint8))
 
             ax2.set_title('GROUND TRUTH')
+            ax2.axis('off')
             ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
             ax3.set_title('MODEL PREDICTION')
+            ax3.axis('off')
             y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
             ax3.imshow((y_pred * 255),cmap = 'gray')
 
+            # create folder if not exists
             Path("check_training").mkdir(parents=True, exist_ok=True)
-            
+            # save figure
             fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
             
     
