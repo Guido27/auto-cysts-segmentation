@@ -148,9 +148,10 @@ class SegmentCyst(pl.LightningModule):
         if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
             self.log_images(features, masks, logits, batch_idx)
 
-        #for metric_name, metric in self.train_metrics.items():
-        #    m = metric(logits, masks.int())
-        #    self.log(f"train_{metric_name}", m, on_step=False, on_epoch=True, prog_bar=True)
+        for metric_name, metric in self.train_metrics.items():
+            m = metric(logits, masks.int())
+            self.log(f"train_{metric_name}", m, on_step=False, on_epoch=True, prog_bar=True)
+        
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return {"loss": loss}
