@@ -202,7 +202,8 @@ class CE_Net_(nn.Module):
         #self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
         self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 1, 4, 2, 1)
         self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
+        #self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.finalconv2 = nn.Conv2d(32, 1, 3, padding=1)
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
