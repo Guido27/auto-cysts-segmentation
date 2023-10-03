@@ -26,6 +26,7 @@ uacanet:
 unetpp:
   model:
     type: models.UnetPlusPlus
+    name: Unet++
     encoder_name: resnet50
     classes: 1
     encoder_weights: imagenet
