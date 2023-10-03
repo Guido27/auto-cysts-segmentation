@@ -1,7 +1,7 @@
 CE_Net:
   model:
-    type: models.CE_Net_OCT
-    name: cenet
+    type: models.CE_Net_
+    name: CE-Net
 
 pranet:
   model:
