@@ -162,7 +162,7 @@ def load_rgb(image_path: Union[Path, str]) -> np.array:
 
 def load_mask(path):
     im = str(path)
-    return cv2.imread(im, cv2.IMREAD_GRAYSCALE)
+    return (cv2.imread(im, cv2.IMREAD_GRAYSCALE) > 0).astype(np.uint8)
 
 
 def binary_mean_iou(logits: torch.Tensor, targets: torch.Tensor, EPSILON = 1e-15) -> torch.Tensor:
@@ -219,6 +219,8 @@ def init_training(args, hparams, name, tiling=False):
     hparams["checkpoint_callback"]["dirpath"] /= name
     hparams["checkpoint_callback"]["dirpath"].mkdir(exist_ok=True, parents=True)
 
+    if hasattr(args, 'noG_preprocessing'):
+        hparams["noG_preprocessing"] = args.noG_preprocessing
     
     hparams['seed'] = args.seed
     hparams['tube'] = args.tube
