@@ -65,7 +65,7 @@ def train(args, hparams, name=None):
 
     data = CystDataModule(**dict(hparams, **args.__dict__))
     model = SegmentCyst(**hparams,
-                    discard_res=~args.save_results,
+                    discard_res= not args.save_results,
                     )
     
     with (hparams["checkpoint_callback"]["dirpath"] / "split_samples.json").open('w') as file:
@@ -80,7 +80,7 @@ def train(args, hparams, name=None):
     if logger:
         logger.log_hyperparams(hparams)
         # logger.watch(model, log='all', log_freq=1)
-
+    
     if getattr(args, 'seed', None) is not None:
         pl.seed_everything(args.seed)
         

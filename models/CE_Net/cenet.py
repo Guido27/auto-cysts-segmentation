@@ -7,6 +7,9 @@ import torch.nn.functional as F
 
 from .backbones.resnet.resnet_factory import get_resnet_backbone
 
+# added
+from .losses.losses import *
+from easydict import EasyDict as ed
 
 from functools import partial
 
@@ -170,8 +173,12 @@ class DecoderBlock(nn.Module):
 
 
 class CE_Net_(nn.Module):
-    def __init__(self, num_classes=1, num_channels=3):
+    def __init__(self, num_classes=1, num_channels=3, **opt):
+        
         super(CE_Net_, self).__init__()
+
+        if type(opt) == dict: opt = ed(opt)
+        
         filters = [64, 128, 256, 512]
         # resnet = models.resnet34(pretrained=True)
         resnet = get_resnet_backbone('resnet34')(pretrain=True)
@@ -197,8 +204,12 @@ class CE_Net_(nn.Module):
         self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.finalrelu2 = nonlinearity
         self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        
 
-    def forward(self, x):
+        # added
+        self.loss_fn = bce_iou_loss
+
+    def forward(self, x, y=None):
         # Encoder
         x = self.firstconv(x)
         x = self.firstbn(x)
@@ -220,13 +231,17 @@ class CE_Net_(nn.Module):
         d1 = self.decoder1(d2)
 
 
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
-
-        return torch.sigmoid(out)
+        out5 = self.finaldeconv1(d1)
+        out4 = self.finalrelu1(out5)
+        out3 = self.finalconv2(out4)
+        out2 = self.finalrelu2(out3)
+        out = self.finalconv3(out2)
+        #SKIP SIGMOID
+        #out = torch.sigmoid(out)
+        
+        return out
+            
+            
 
 
 class CE_Net_backbone_DAC_without_atrous(nn.Module):
@@ -405,10 +420,12 @@ class CE_Net_backbone_inception_blocks(nn.Module):
 
 
 class CE_Net_OCT(nn.Module):
-    def __init__(self, num_classes=12, num_channels=3):
+    def __init__(self, num_classes=1, num_channels=3, **opt):
         super(CE_Net_OCT, self).__init__()
 
+        if type(opt) == dict: opt = ed(opt)
         filters = [64, 128, 256, 512]
+        
         resnet = models.resnet34(pretrained=True)
         self.firstconv = resnet.conv1
         self.firstbn = resnet.bn1

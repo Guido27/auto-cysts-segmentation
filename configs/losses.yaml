@@ -9,3 +9,6 @@ sufloss:
 
 base:
   type: losses.ComboLoss 
+
+DiceLoss:
+  type: losses.DiceLoss

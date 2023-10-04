@@ -40,8 +40,9 @@ def main(args):
     name = "crossval_" + "_".join([f"{hp}_{getattr(args, hp)}" for hp in ["model", "loss", "tube", "exp", "noG_preprocessing", "seed"] if getattr(args, hp, None) is not None])
     
     torch.set_float32_matmul_precision('medium')
-    train(args, hparams, name)
     
+    train(args, hparams, name)
+        
     if args.evaluate_exp:
         evaluator = Evaluator(
             predP=hparams["checkpoint_callback"]["dirpath"]/'result'/'test',

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from time import time
 
+import matplotlib.pyplot as plt 
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -26,6 +27,7 @@ class SegmentCyst(pl.LightningModule):
         self.val_images =  Path(self.hparams.checkpoint_callback["dirpath"]) / "images/val_predictions"
 
         if not self.hparams.discard_res:
+            print("Creating folders for train and validation visualization...")
             self.train_images.mkdir(exist_ok=True, parents=True)
             self.val_images.mkdir(exist_ok=True, parents=True)
          
@@ -72,7 +74,7 @@ class SegmentCyst(pl.LightningModule):
             return self.optimizers, [scheduler]
         return self.optimizers
     
-    def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+    """ def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             if isinstance(self.trainer.logger, pl.loggers.tensorboard.TensorBoardLogger):
                 # self.trainer.logger.experiment.add_image(f"Image/{batch_idx}_{img_idx}", image, 0)
@@ -94,9 +96,37 @@ class SegmentCyst(pl.LightningModule):
                 )
                 self.logger.experiment.log({"generated_images": [img]}, commit=False)
             else:
+                print(f"Printing images in {self.train_images}")
                 Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
                 Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
-                Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+                Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png") """
+    
+    def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+        # logits_ is the output of the last layer of the model
+        for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
+            
+            fig,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
+
+            # image is a float tensor
+            ax1.set_title('IMAGE')
+            ax1.axis('off')
+            ax1.imshow((image * 255).cpu().permute(1,2,0).numpy().astype(np.uint8))
+
+            ax2.set_title('GROUND TRUTH')
+            ax2.axis('off')
+            ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
+
+            ax3.set_title('MODEL PREDICTION')
+            ax3.axis('off')
+            y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
+            ax3.imshow((y_pred * 255),cmap = 'gray')
+
+            # create folder if not exists
+            Path("check_training").mkdir(parents=True, exist_ok=True)
+            # save figure
+            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
+            
+    
 
     def on_epoch_start(self):
         self.epoch_start_time.append(time())
@@ -115,15 +145,15 @@ class SegmentCyst(pl.LightningModule):
         
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
-        # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-        #     self.log_images(features, masks, logits_, batch_idx)
+        if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
+            self.log_images(features, masks, logits, batch_idx)
 
         for metric_name, metric in self.train_metrics.items():
-            metric(logits, masks.int())
-            self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
+            m = metric(logits, masks.int())
+            self.log(f"train_{metric_name}", m, on_step=False, on_epoch=True, prog_bar=True)
+        
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
-        self.log("train_loss", loss)
-        self.log("lr", self._get_current_lr())
         return {"loss": loss}
 
     def _get_current_lr(self) -> torch.Tensor:
@@ -211,6 +241,6 @@ class SegmentCyst(pl.LightningModule):
 
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
-            metric(logits, masks.int())
-            self.log(f"test_{metric_name}", metric, on_step=True, on_epoch=True)
+            m = metric(logits, masks.int())
+            self.log(f"test_{metric_name}", m, on_step=True, on_epoch=True)
     
