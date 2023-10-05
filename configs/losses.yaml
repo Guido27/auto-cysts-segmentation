@@ -12,3 +12,6 @@ base:
 
 DiceLoss:
   type: losses.DiceLoss
+
+BCEDiceLoss:
+ type: losses.BCEDiceLoss
