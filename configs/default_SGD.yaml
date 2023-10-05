@@ -24,6 +24,7 @@ loss:
 scheduler: 
   type: torch.optim.lr_scheduler.PolynomialLR
   verbose: True
+  total_iters: 10
 
 checkpoint_callback:
   dirpath: "./cyst_checkpoints/Nature_v4"
