@@ -23,8 +23,6 @@ loss:
 
 scheduler: 
   type: torch.optim.lr_scheduler.PolynomialLR
-  power: 0.9
-  total_iters: 1
   verbose: True
 
 checkpoint_callback:
