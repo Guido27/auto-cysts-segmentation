@@ -30,7 +30,7 @@ checkpoint_callback:
   
 earlystopping_callback:
   monitor: val_loss
-  min_delta: 0.001
+  min_delta: 0.0005
   patience: 10
   verbose: True
   mode: min
