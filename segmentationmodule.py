@@ -202,6 +202,7 @@ class SegmentCyst(pl.LightningModule):
 
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
+        self.log("lr", self._get_current_lr)
 
     # def on_train_end(self):
     #     import matplotlib.pyplot as plt
