@@ -1,7 +1,5 @@
 ## Unet++
 
-
-
 ## CE-Net
 
 ### Conf 0
@@ -19,3 +17,7 @@ CE-NEt con questa configurazione **non imparava**. La loss era molto bassa ma l'
 | Optimizer | Loss     | LR     | Batch size |
 | --------- | -------- |:------:|:----------:|
 | Adam      | DiceLoss | 0.0001 | 4          |
+
+
+
+![Image](work_diary_images/val_loss_CE-Net.png)
