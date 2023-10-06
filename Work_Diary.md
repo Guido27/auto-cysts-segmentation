@@ -1,10 +1,14 @@
-## Unet
+
 
 ## Unet++
 
+Baseline per confronto
+
+- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/ape1j3lj/overview?workspace=user-guidog)
+
 ## CE-Net
 
-### Conf 0
+### Configuration A
 
 | Optimizer | Loss            | LR     | Batch size |
 | --------- | --------------- |:------:|:----------:|
@@ -14,7 +18,7 @@ CE-Net con questa configurazione **non imparava**. La loss era molto bassa ma l'
 
 - Test IoU: 0
 
-### Conf 1
+### Configuration B
 
 | Optimizer | Loss     | LR     | Batch size |
 | --------- | -------- |:------:|:----------:|
@@ -23,5 +27,7 @@ CE-Net con questa configurazione **non imparava**. La loss era molto bassa ma l'
 Cambiando la loss e usando la DiceLoss il modello sembra imparare correttamente cosa segmentare e gli output durante training e test sono sensati. Probabilmente CE-Net lavora bene con la Dice, che è proprio la loss usata dagli autori del paper, nello specifico gli autori introducono una versione con un termine per effettuare regularization (la versione usata qui non è regolarizzata)
 
 - Test IoU: 0.5873
+- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/0ni79nnm/overview?workspace=user-guidog)
+- Implementazione Dice Loss: [wolny/pytorch-3dunet](https://github.com/wolny/pytorch-3dunet)
 
-Implementazione Dice Loss: [GitHub - wolny/pytorch-3dunet: 3D U-Net model for volumetric semantic segmentation written in pytorch](https://github.com/wolny/pytorch-3dunet)
+### 
