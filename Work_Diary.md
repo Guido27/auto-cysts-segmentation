@@ -14,7 +14,7 @@ Baseline per confronto, allenata per 38 epoche
 
 ## CE-Net
 
-### Configuration A
+### Setup 1
 
 | Optimizer | Scheduler                  | Loss          | LR     | Batch size |
 |:--------- |:-------------------------- |:------------- |:------ |:---------- |
@@ -35,7 +35,7 @@ CE-Net con questa configurazione **non imparava**. La loss era molto bassa ma l'
 - Test IoU: 0.5817
 - Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/w6souk9b/overview?workspace=user-guidog)
 
-### Configuration B
+### Setup 2
 
 | Optimizer | Scheduler                  | Loss     | LR     | Batch size |
 | --------- | -------------------------- | -------- |:------:|:----------:|
