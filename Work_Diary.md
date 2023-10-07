@@ -9,8 +9,8 @@ Baseline. Allenata per 38 epoche, run unica.
 - MaxEpochs: 100
 - EarlyStopping: True
     - Patience: 20   
-- Test IoU: 0.5393
-- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/ape1j3lj/overview?workspace=user-guidog)
+- Test IoU: 0.5839
+- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/in4puupd/overview?workspace=user-guidog)
 
 ## CE-Net
 
