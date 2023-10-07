@@ -31,13 +31,13 @@ checkpoint_callback:
 earlystopping_callback:
   monitor: val_loss
   min_delta: 0.005
-  patience: 10
+  patience: 20
   verbose: False
   mode: min
 
 noG_preprocessing: False
 train_parameters:
-  epochs: 50
+  epochs: 100
   batch_size: 4
 
 val_parameters:
