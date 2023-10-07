@@ -41,13 +41,13 @@ CE-Net con questa configurazione **non imparava**. La loss era molto bassa ma l'
 | --------- | -------------------------- | -------- |:------:|:----------:|
 | Adam      | CosineAnnealingWarmRestart | DiceLoss | 0.0001 | 4          |
 
-Cambiando la loss e usando la DiceLoss il modello sembra imparare prima cosa segmentare e gli output durante training e test sono sensati fin da subito. Probabilmente CE-Net lavora bene con la Dice, che è proprio la loss usata dagli autori del paper, nello specifico gli autori introducono una versione con un termine per effettuare regularization (la versione usata qui non è regolarizzata). Training terminato dopo 50 epoche.
+Cambiando la loss e usando la DiceLoss il modello sembra imparare prima cosa segmentare e gli output durante training e test sono sensati fin da subito. Probabilmente CE-Net lavora bene con la Dice, che è proprio la loss usata dagli autori del paper, nello specifico gli autori introducono una versione con un termine per effettuare regularization (la versione usata qui non è regolarizzata).
 
 - MaxEpochs 100
 - EarlyStopping: True
     - Patience: 20
-- Test IoU: 0.5873
-- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/0ni79nnm/overview?workspace=user-guidog)
+- Test IoU: 0.6124
+- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/exm43q8b/overview?workspace=user-guidog) 
 
 
 ### Note
