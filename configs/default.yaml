@@ -37,7 +37,7 @@ earlystopping_callback:
 
 noG_preprocessing: False
 train_parameters:
-  epochs: 100
+  epochs: 50
   batch_size: 4
 
 val_parameters:
