@@ -8,14 +8,13 @@ Created on Wed Jul 21 14:58:14 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pretrain.Res2Net_v1b import res2net50_v1b_26w_4s, res2net101_v1b_26w_4s
-import math
+from .pretrain.Res2Net_v1b import res2net50_v1b_26w_4s, res2net101_v1b_26w_4s
 import torchvision.models as models
-from lib.conv_layer import Conv, BNPReLU
-from lib.axial_atten import AA_kernel
-from lib.context_module import CFPModule
-from lib.partial_decoder import aggregation
-import os
+from .lib.conv_layer import Conv, BNPReLU
+from .lib.axial_atten import AA_kernel
+from .lib.context_module import CFPModule
+from .lib.partial_decoder import aggregation
+
  
     
 
