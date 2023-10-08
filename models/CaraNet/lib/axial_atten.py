@@ -7,8 +7,8 @@ Created on Tue Aug 10 17:17:13 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from lib.conv_layer import Conv
-from lib.self_attention import self_attn
+from conv_layer import Conv
+from self_attention import self_attn
 import math
 
 
