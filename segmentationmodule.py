@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from time import time
 
+import torch.nn.functional as F
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -109,6 +110,25 @@ class SegmentCyst(pl.LightningModule):
             logits = self.forward(features, masks)
             loss = logits['loss']
             logits = logits['pred']
+
+        # CaraNet    
+        elif self.model_name in ['caranet']:
+            
+            lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(features)
+            
+            loss5 = self.loss(lateral_map_5, masks)
+            loss3 = self.loss(lateral_map_3, masks)
+            loss2 = self.loss(lateral_map_2, masks)
+            loss1 = self.loss(lateral_map_1, masks)
+            loss = loss5 +loss3 + loss2 + loss1
+            
+            res = lateral_map_5
+            res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
+            res = res.sigmoid().data.cpu().numpy().squeeze()
+            res = (res - res.min()) / (res.max() - res.min() + 1e-8)
+
+            logits = res
+
         else:
             logits = self.forward(features)
             loss = self.loss(logits, masks)
@@ -140,6 +160,25 @@ class SegmentCyst(pl.LightningModule):
             logits = self.forward(features, masks)
             loss = logits['loss'] 
             logits = logits['pred']
+
+        # CaraNet    
+        elif self.model_name in ['caranet']:
+            
+            lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(features)
+            
+            loss5 = self.loss(lateral_map_5, masks)
+            loss3 = self.loss(lateral_map_3, masks)
+            loss2 = self.loss(lateral_map_2, masks)
+            loss1 = self.loss(lateral_map_1, masks)
+            loss = loss5 +loss3 + loss2 + loss1
+            
+            res = lateral_map_5
+            res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
+            res = res.sigmoid().data.cpu().numpy().squeeze()
+            res = (res - res.min()) / (res.max() - res.min() + 1e-8)
+
+            logits = res
+
         else:
             logits = self.forward(features)
             loss = self.loss(logits, masks)

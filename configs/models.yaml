@@ -1,3 +1,8 @@
+caranet:
+  model:
+    type: models.caranet
+    name: CaraNet
+    
 pranet:
   model:
     type: models.PraNet
