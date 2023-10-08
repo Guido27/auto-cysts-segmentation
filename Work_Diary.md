@@ -4,7 +4,7 @@
 |:--------- |:-------------------------- |:------------- |:------ |:---------- |
 | Adam      | CosineAnnealingWarmRestart | BCEwithLogits | 0.0001 | 4          |
 
-Baseline. Allenata per 38 epoche, run unica.
+Baseline.
 
 - MaxEpochs: 100
 - EarlyStopping: True
