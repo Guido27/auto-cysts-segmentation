@@ -15,6 +15,8 @@ from time import time
 
 import torch.nn.functional as F
 
+import matplotlib.pyplot as plt
+
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
         super().__init__()
@@ -74,30 +76,29 @@ class SegmentCyst(pl.LightningModule):
         return self.optimizers
     
     def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+        # logits_ is the output of the last layer of the model
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
-            if isinstance(self.trainer.logger, pl.loggers.tensorboard.TensorBoardLogger):
-                # self.trainer.logger.experiment.add_image(f"Image/{batch_idx}_{img_idx}", image, 0)
-                self.trainer.logger.experiment.add_image(f"GroundTruth/{batch_idx}_{img_idx}", y_true, 0)
-                self.trainer.logger.experiment.add_image(f"Prediction/{batch_idx}_{img_idx}", y_pred, 0)
-            elif isinstance(self.trainer.logger, pl.loggers.wandb.WandbLogger):
-                img = wandb.Image(
-                    image,
-                    masks={
-                        "predictions": {
-                            "mask_data": y_pred,
-                            "class_labels": class_labels,
-                        },
-                        "groud_truth": {
-                            "mask_data": y_true,
-                            "class_labels": class_labels,
-                        },
-                    },
-                )
-                self.logger.experiment.log({"generated_images": [img]}, commit=False)
-            else:
-                Image.fromarray(y_pred*255).save(self.train_images/f"{batch_idx}_{img_idx}.png")
-                Image.fromarray(y_true*255).save(self.train_images/f"{batch_idx}_{img_idx}_gt.png")
-                Image.fromarray(image).save(self.train_images/f"{batch_idx}_{img_idx}_img.png")
+            
+            fig,(ax1, ax2, ax3) = plt.subplots(1,3,figsize = (10,5))
+
+            # image is a float tensor
+            ax1.set_title('IMAGE')
+            ax1.axis('off')
+            ax1.imshow((image * 255).cpu().permute(1,2,0).numpy().astype(np.uint8))
+
+            ax2.set_title('GROUND TRUTH')
+            ax2.axis('off')
+            ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
+
+            ax3.set_title('MODEL PREDICTION')
+            ax3.axis('off')
+            y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
+            ax3.imshow((y_pred * 255),cmap = 'gray')
+
+            # create folder if not exists
+            Path("check_training").mkdir(parents=True, exist_ok=True)
+            # save figure
+            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
 
     def on_epoch_start(self):
         self.epoch_start_time.append(time())
