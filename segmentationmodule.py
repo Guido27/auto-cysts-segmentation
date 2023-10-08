@@ -75,7 +75,7 @@ class SegmentCyst(pl.LightningModule):
             return self.optimizers, [scheduler]
         return self.optimizers
     
-    def log_images(self, features, masks, logits_, batch_idx, class_labels={0: "background", 1: "cyst"}):
+    def log_images(self, features, masks, logits_, batch_idx):
         # logits_ is the output of the last layer of the model
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
@@ -136,8 +136,8 @@ class SegmentCyst(pl.LightningModule):
         
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
-        # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-        #     self.log_images(features, masks, logits_, batch_idx)
+        if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
+            self.log_images(features, masks, logits, batch_idx)
 
         for metric_name, metric in self.train_metrics.items():
             metric(logits, masks.int())
