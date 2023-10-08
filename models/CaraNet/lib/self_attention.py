@@ -8,8 +8,8 @@ Created on Tue Aug 10 17:15:44 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from conv_layer import Conv
-import math
+from .conv_layer import Conv
+
 
 class self_attn(nn.Module):
     def __init__(self, in_channels, mode='hw'):
