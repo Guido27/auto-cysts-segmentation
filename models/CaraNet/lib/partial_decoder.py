@@ -7,8 +7,8 @@ Created on Tue Aug 10 17:20:30 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from lib.conv_layer import Conv, BNPReLU
-import math
+from conv_layer import Conv, BNPReLU
+
 
 class aggregation(nn.Module):
     # dense aggregation, it can be replaced by other aggregation previous, such as DSS, amulet, and so on.

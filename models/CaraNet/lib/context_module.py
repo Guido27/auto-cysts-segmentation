@@ -7,8 +7,8 @@ Created on Tue Aug 10 17:18:49 2021
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from lib.conv_layer import Conv, BNPReLU
-import math
+from conv_layer import Conv, BNPReLU
+
 
 class CFPModule(nn.Module):
     def __init__(self, nIn, d=1, KSize=3,dkSize=3):
