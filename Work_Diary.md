@@ -32,8 +32,8 @@ CE-Net con questa configurazione **non imparava**. La loss era molto bassa ma l'
 
 - MaxEpochs: 50
 - EarlyStopping: False
-- Test IoU: 0.5817
-- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/w6souk9b/overview?workspace=user-guidog)
+- Test IoU: 0.5891
+- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/y2360dg6/overview?workspace=user-guidog)
 
 ### Run 2
 
