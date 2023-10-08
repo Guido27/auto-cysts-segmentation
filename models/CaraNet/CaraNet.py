@@ -20,7 +20,7 @@ from .lib.partial_decoder import aggregation
 
     
 class caranet(nn.Module):
-    def __init__(self, channel=32):
+    def __init__(self, channel=32,**opt):
         super().__init__()
         
          # ---- ResNet Backbone ----
