@@ -173,9 +173,9 @@ class SegmentCyst(pl.LightningModule):
             loss = loss5 +loss3 + loss2 + loss1
             
             res = lateral_map_5
-            res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
-            res = res.sigmoid().data.cpu().numpy().squeeze()
-            res = (res - res.min()) / (res.max() - res.min() + 1e-8)
+            #res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
+            #res = res.sigmoid().data.cpu().numpy().squeeze()
+            #res = (res - res.min()) / (res.max() - res.min() + 1e-8)
 
             logits = res
 
@@ -228,6 +228,7 @@ class SegmentCyst(pl.LightningModule):
 
     #     fig.savefig(self.hparams.checkpoint_callback['dirpath'] / 'metrics.png')
 
+    #TODO modificare il test_step per CaraNet
     def test_step(self, batch, batch_id):
         features = batch["features"]
         masks = batch["masks"]
