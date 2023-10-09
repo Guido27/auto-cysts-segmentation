@@ -238,12 +238,10 @@ class SegmentCyst(pl.LightningModule):
             logits = self.forward(features, masks)
             logits = logits['pred']
         elif self.model_name in ['caranet']:
-            logits, lateral_map_3, lateral_map_2, lateral_map_1  = self.forward()
+            logits, lateral_map_3, lateral_map_2, lateral_map_1  = self.forward(features)
         else:
             logits = self.forward(features)
-        
-        # debug
-        print(logits.shape)
+    
         
         timing = [time()-t0, features.shape[0]]
         # result["test_iou"] = binary_mean_iou(logits, masks)
