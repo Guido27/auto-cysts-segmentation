@@ -242,6 +242,9 @@ class SegmentCyst(pl.LightningModule):
         else:
             logits = self.forward(features)
         
+        # debug
+        print(logits.shape)
+        
         timing = [time()-t0, features.shape[0]]
         # result["test_iou"] = binary_mean_iou(logits, masks)
         for i in range(features.shape[0]):
