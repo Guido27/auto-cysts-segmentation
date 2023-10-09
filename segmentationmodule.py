@@ -229,7 +229,6 @@ class SegmentCyst(pl.LightningModule):
 
     #     fig.savefig(self.hparams.checkpoint_callback['dirpath'] / 'metrics.png')
 
-    #TODO modificare il test_step per CaraNet
     def test_step(self, batch, batch_id):
         features = batch["features"]
         masks = batch["masks"]
@@ -238,6 +237,8 @@ class SegmentCyst(pl.LightningModule):
         if self.model_name in ['uacanet', 'pranet']:
             logits = self.forward(features, masks)
             logits = logits['pred']
+        elif self.model_name in ['caranet']:
+            logits, lateral_map_3, lateral_map_2, lateral_map_1  = self.forward()
         else:
             logits = self.forward(features)
         
