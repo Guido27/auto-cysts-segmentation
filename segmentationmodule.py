@@ -118,7 +118,7 @@ class SegmentCyst(pl.LightningModule):
         # CaraNet    
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
-            optimizer = self.optimizers[0]
+            optimizer = self.optimizers()
             optimizer.zero_grad()
             
             # ---- data prepare ----
