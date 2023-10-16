@@ -91,16 +91,16 @@ class SegmentCyst(pl.LightningModule):
             # image is a float tensor
             ax1.set_title('IMAGE')
             ax1.axis('off')
-            ax1.imshow((image * 255).cpu().permute(1,2,0).numpy().astype(np.uint8))
+            ax1.imshow((image).cpu().permute(1,2,0).numpy().astype(np.uint8))
 
             ax2.set_title('GROUND TRUTH')
             ax2.axis('off')
-            ax2.imshow((y_true * 255).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
+            ax2.imshow((y_true).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
             ax3.set_title('MODEL PREDICTION')
             ax3.axis('off')
             y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
-            ax3.imshow((y_pred * 255),cmap = 'gray')
+            ax3.imshow((y_pred),cmap = 'gray')
 
             # create folder if not exists
             Path("check_training").mkdir(parents=True, exist_ok=True)
@@ -119,6 +119,7 @@ class SegmentCyst(pl.LightningModule):
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
             optimizer = self.optimizers[0]
+            optimizer.zero_grad()
             
             # ---- data prepare ----
             images = features.float()
@@ -141,7 +142,7 @@ class SegmentCyst(pl.LightningModule):
             
             logits = lateral_map_5
 
-            optimizer.zero_grad()
+            
             self.manual_backward(loss)
 
             # clip gradients
