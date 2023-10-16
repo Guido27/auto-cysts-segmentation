@@ -14,7 +14,7 @@ import pandas as pd
 from time import time
 
 import torch.nn.functional as F
-
+from torch.autograd import Variable
 import matplotlib.pyplot as plt
 
 class SegmentCyst(pl.LightningModule):
@@ -118,12 +118,14 @@ class SegmentCyst(pl.LightningModule):
         # CaraNet    
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
-            optimizer = self.optimizers()
+            optimizer = self.optimizers[0]
             optimizer.zero_grad()
             
             # ---- data prepare ----
             images = features.float()
             gts = masks
+            images = Variable(images).cuda()
+            gts = Variable(gts).cuda()
             # ---- rescale ----
             images_dim = 1024 # original dimension of images 1024x1024
             trainsize = int(round(images_dim*rate/32)*32)
