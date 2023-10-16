@@ -156,7 +156,7 @@ class SegmentCyst(pl.LightningModule):
                 self.log_images(features, masks, logits, batch_idx)
 
             for metric_name, metric in self.train_metrics.items():
-                metric(logits, gts.int())
+                metric(logits, gts)
                 self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
 
             self.log("train_loss", loss)
