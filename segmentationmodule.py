@@ -50,6 +50,9 @@ class SegmentCyst(pl.LightningModule):
         })
         self.epoch_start_time = []
 
+        # set automatic optimization as False
+        self.automatic_optimization = False
+
     def forward(self, batch: torch.Tensor, masks: torch.Tensor=None) -> torch.Tensor:
         if masks is not None:
             return self.model(batch, masks)
@@ -104,48 +107,50 @@ class SegmentCyst(pl.LightningModule):
         self.epoch_start_time.append(time())
     
     def training_step(self, batch, batch_idx):
+
         features = batch["features"]
         masks = batch["masks"]
-                
-        if self.model_name in ['uacanet', 'pranet']:
-            logits = self.forward(features, masks)
-            loss = logits['loss']
-            logits = logits['pred']
-
+    
         # CaraNet    
-        elif self.model_name in ['caranet']:
+        size_rates = [0.75, 1, 1.25]
+        for rate in size_rates:
+            optimizer = self.optimizers()
+            optimizer.zero_grad()
+            # ---- data prepare ----
+            images = features
+            gts = masks
+            # ---- rescale ----
+            images_dim = 1024 # original dimension of images 1024x1024
+            trainsize = int(round(images_dim*rate/32)*32)
+            if rate != 1:
+                images = F.upsample(images, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
+                gts = F.upsample(gts, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
             
             lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(features)
             
-            loss5 = self.loss(lateral_map_5, masks)
-            loss3 = self.loss(lateral_map_3, masks)
-            loss2 = self.loss(lateral_map_2, masks)
-            loss1 = self.loss(lateral_map_1, masks)
+            loss5 = self.loss(lateral_map_5, gts)
+            loss3 = self.loss(lateral_map_3, gts)
+            loss2 = self.loss(lateral_map_2, gts)
+            loss1 = self.loss(lateral_map_1, gts)
             loss = loss5 +loss3 + loss2 + loss1
             
-            res = lateral_map_5
-            #res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
-            #res = res.sigmoid().data.cpu().numpy().squeeze()
-            #res = (res - res.min()) / (res.max() - res.min() + 1e-8)
+            logits = lateral_map_5
 
-            logits = res
+            self.manual_backward(loss)
+            optimizer.step()
+    
+            #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
-        else:
-            logits = self.forward(features)
-            loss = self.loss(logits, masks)
+            if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
+                self.log_images(features, masks, logits, batch_idx)
+
+            for metric_name, metric in self.train_metrics.items():
+                metric(logits, masks.int())
+                self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
+
+            self.log("train_loss", loss)
+            self.log("lr", self._get_current_lr())
         
-        logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
-        
-        if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-            self.log_images(features, masks, logits, batch_idx)
-
-        for metric_name, metric in self.train_metrics.items():
-            metric(logits, masks.int())
-            self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
-
-        self.log("train_loss", loss)
-        self.log("lr", self._get_current_lr())
-        return {"loss": loss}
 
     def _get_current_lr(self) -> torch.Tensor:
         lr = [x["lr"] for x in self.optimizers[0].param_groups][0]
