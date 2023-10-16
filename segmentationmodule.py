@@ -90,15 +90,15 @@ class SegmentCyst(pl.LightningModule):
 
             # image is a float tensor
             ax1.set_title('IMAGE')
-            ax1.axis('off')
+            #ax1.axis('off')
             ax1.imshow((image).cpu().permute(1,2,0).numpy().astype(np.uint8))
 
             ax2.set_title('GROUND TRUTH')
-            ax2.axis('off')
+            #ax2.axis('off')
             ax2.imshow((y_true).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8),cmap = 'gray')
 
             ax3.set_title('MODEL PREDICTION')
-            ax3.axis('off')
+            #ax3.axis('off')
             y_pred = (y_pred > 0.5).permute(1,2,0).squeeze().cpu().detach().numpy().astype(np.uint8)
             ax3.imshow((y_pred),cmap = 'gray')
 
