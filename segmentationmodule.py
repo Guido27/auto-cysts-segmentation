@@ -116,8 +116,7 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"]
     
         # CaraNet    
-        #size_rates = [0.75, 1, 1.25]
-        size_rates = [1] #test without multiscale
+        size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
             optimizer = self.optimizers[0]
             optimizer.zero_grad()
