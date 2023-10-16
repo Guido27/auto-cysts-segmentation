@@ -115,7 +115,7 @@ class SegmentCyst(pl.LightningModule):
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
             optimizer = self.optimizers()
-            optimizer.zero_grad()
+            
             # ---- data prepare ----
             images = features
             gts = masks
@@ -128,6 +128,7 @@ class SegmentCyst(pl.LightningModule):
             
             lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(features)
             
+            #compute loss
             loss5 = self.loss(lateral_map_5, gts)
             loss3 = self.loss(lateral_map_3, gts)
             loss2 = self.loss(lateral_map_2, gts)
@@ -136,7 +137,12 @@ class SegmentCyst(pl.LightningModule):
             
             logits = lateral_map_5
 
+            optimizer.zero_grad()
             self.manual_backward(loss)
+
+            # clip gradients
+            self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+
             optimizer.step()
     
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")

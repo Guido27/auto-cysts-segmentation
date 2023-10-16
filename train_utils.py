@@ -93,7 +93,7 @@ def train(args, hparams, name=None):
                 earlystopping_callback,
                 ],
         # strategy='dp',
-        gradient_clip_val=5.0,
+        #gradient_clip_val=5.0,
         num_sanity_val_steps=3,
         sync_batchnorm=True,
         logger=logger,
