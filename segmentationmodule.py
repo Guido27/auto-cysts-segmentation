@@ -54,6 +54,10 @@ class SegmentCyst(pl.LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch: torch.Tensor, masks: torch.Tensor=None) -> torch.Tensor:
+
+        #transform to a float tensor because there are no augmentations that do it implicitly here
+        batch = batch.float()
+        
         if masks is not None:
             return self.model(batch, masks)
         else:
