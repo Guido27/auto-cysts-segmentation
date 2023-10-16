@@ -68,7 +68,7 @@ class SegmentCyst(pl.LightningModule):
             self.hparams.optimizer,
             params=[x for x in self.model.parameters() if x.requires_grad],
         )
-        self.optimizers = [optimizer]
+        self.optimizers = optimizer
         
         if self.hparams.scheduler is not None:
             scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
