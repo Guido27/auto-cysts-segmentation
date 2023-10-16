@@ -160,6 +160,10 @@ class SegmentCyst(pl.LightningModule):
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
 
             optimizer.step()
+            
+            sch= self.lr_schedulers()
+            sch.step()
+
             return {"loss": loss}
         
 
