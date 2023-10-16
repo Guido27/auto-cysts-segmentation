@@ -160,7 +160,7 @@ class SegmentCyst(pl.LightningModule):
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
 
             optimizer.step()
-            
+
             sch= self.lr_schedulers()
             sch.step()
 
@@ -174,7 +174,7 @@ class SegmentCyst(pl.LightningModule):
         return torch.Tensor([lr])[0]
 
     def validation_step(self, batch, batch_id):
-        features = batch["features"]
+        features = batch["features"].float()
         masks = batch["masks"]
         
         if self.model_name in ['uacanet', 'pranet']:
@@ -191,14 +191,9 @@ class SegmentCyst(pl.LightningModule):
             loss3 = self.loss(lateral_map_3, masks)
             loss2 = self.loss(lateral_map_2, masks)
             loss1 = self.loss(lateral_map_1, masks)
-            loss = loss5 +loss3 + loss2 + loss1
-            
-            res = lateral_map_5
-            #res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
-            #res = res.sigmoid().data.cpu().numpy().squeeze()
-            #res = (res - res.min()) / (res.max() - res.min() + 1e-8)
 
-            logits = res
+            loss = loss5 +loss3 + loss2 + loss1            
+            logits = lateral_map_5
 
         else:
             logits = self.forward(features)
