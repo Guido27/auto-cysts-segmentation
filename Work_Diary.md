@@ -92,3 +92,18 @@ Test di CE-Net con loss BCEDice, una combinazione di BCE e Dice (con peso rispet
 - Run senza EarlyStopping: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/gprm89np/overview?workspace=user-guidog)
 ### Note
 Implementazione Dice Loss e BCEDice Loss utilizzate prese da: [wolny/pytorch-3dunet](https://github.com/wolny/pytorch-3dunet)
+
+## CaraNet
+### Run 1
+| Optimizer  | Scheduler                   | Loss         | LR    | Batch size |
+| :--------: | :-------------------------: | :----------: |:-----:|:----------:|
+| Adam       | CosineAnnealingWarmRestart  | structure_loss  | 0.0001 | 4          |
+
+Prima run effettuata con CaraNet usando le augmentation del progetto di base, nel paper non usano augmentation ma multi-scale train strategy
+La loss usata è quella del paper, ovvero una combinazione lineare di BCE e IoU.
+
+-MaxEpochs 100
+- EarlyStopping True
+    - Patience: 10
+- Test Iou: 0.5936
+- Run: [Weights & Biases](https://wandb.ai/guidowandb/rene-policistico-cyst_segmentation/runs/fjqzh6oo/overview?workspace=user-guidog)
