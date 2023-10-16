@@ -141,19 +141,11 @@ class SegmentCyst(pl.LightningModule):
             loss = loss5 +loss3 + loss2 + loss1
             
             logits = lateral_map_5
-
-            
-            self.manual_backward(loss)
-
-            # clip gradients
-            self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
-
-            optimizer.step()
     
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-                self.log_images(features, masks, logits, batch_idx)
+                self.log_images(images, gts, logits, batch_idx)
 
             for metric_name, metric in self.train_metrics.items():
                 metric(logits, gts.int())
@@ -161,6 +153,13 @@ class SegmentCyst(pl.LightningModule):
 
             self.log("train_loss", loss)
             self.log("lr", self._get_current_lr())
+
+            self.manual_backward(loss)
+
+            # clip gradients
+            self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+
+            optimizer.step()
             return {"loss": loss}
         
 
