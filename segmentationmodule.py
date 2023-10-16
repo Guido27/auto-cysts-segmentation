@@ -161,6 +161,7 @@ class SegmentCyst(pl.LightningModule):
 
             self.log("train_loss", loss)
             self.log("lr", self._get_current_lr())
+            return {"loss": loss}
         
 
     def _get_current_lr(self) -> torch.Tensor:
