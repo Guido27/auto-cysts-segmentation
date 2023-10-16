@@ -27,7 +27,7 @@ class SegmentationDataset(Dataset):
         self.noG = noG
 
     def __len__(self) -> int:
-        return self.length*3
+        return self.length
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
 
