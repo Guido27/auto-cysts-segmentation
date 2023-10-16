@@ -121,7 +121,7 @@ class SegmentCyst(pl.LightningModule):
             optimizer = self.optimizers[0]
             
             # ---- data prepare ----
-            images = features
+            images = features.float()
             gts = masks
             # ---- rescale ----
             images_dim = 1024 # original dimension of images 1024x1024
