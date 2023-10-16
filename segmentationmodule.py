@@ -130,7 +130,7 @@ class SegmentCyst(pl.LightningModule):
                 images = F.upsample(images, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
                 gts = F.upsample(gts, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
             
-            lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(features)
+            lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(images)
             
             #compute loss
             loss5 = self.loss(lateral_map_5, gts)
