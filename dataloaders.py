@@ -40,8 +40,8 @@ class SegmentationDataset(Dataset):
             image[:, :, 1] = 0
 
         # apply augmentations
-        #sample = self.transform(image=image, mask=mask)
-        #image, mask = sample["image"], sample["mask"]
+        sample = self.transform(image=image, mask=mask)
+        image, mask = sample["image"], sample["mask"]
 
         mask = (mask > 0).astype(np.uint8)
 
@@ -80,9 +80,9 @@ class CystDataModule(pl.LightningDataModule):
             print("Len train samples = ", len(self.train_samples))
             print("Len val samples = ", len(self.val_samples))
 
-        self.train_aug = None #from_dict(self.hparams.train_aug)
-        self.val_aug = None #from_dict(self.hparams.val_aug)
-        self.test_aug = None #from_dict(self.hparams.test_aug)
+        self.train_aug = from_dict(self.hparams.train_aug)
+        self.val_aug = from_dict(self.hparams.val_aug)
+        self.test_aug = from_dict(self.hparams.test_aug)
 
         self.batch_size = self.hparams.train_parameters["batch_size"]
         self.val_batch_size = self.hparams.val_parameters["batch_size"]
