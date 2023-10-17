@@ -68,7 +68,7 @@ class SegmentCyst(pl.LightningModule):
             self.hparams.optimizer,
             params=[x for x in self.model.parameters() if x.requires_grad],
         )
-        optimizer = [optimizer]
+        opt = [optimizer]
         
         if self.hparams.scheduler is not None:
             scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
@@ -79,8 +79,8 @@ class SegmentCyst(pl.LightningModule):
                        'lr_scheduler': scheduler,
                        'monitor': 'val_iou'
                    }
-            return optimizer, [scheduler]
-        return optimizer
+            return opt, [scheduler]
+        return opt
     
     def log_images(self, features, masks, logits_, batch_idx):
         # logits_ is the output of the last layer of the model
