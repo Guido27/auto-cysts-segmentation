@@ -115,7 +115,7 @@ class SegmentCyst(pl.LightningModule):
         features = batch["features"]
         masks = batch["masks"]
     
-        # CaraNet    
+        # manual steps in order to perform multi-scale training    
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
             optimizer = self.optimizers()
@@ -133,17 +133,22 @@ class SegmentCyst(pl.LightningModule):
                 images = F.upsample(images, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
                 gts = F.upsample(gts, size=(trainsize, trainsize), mode='bilinear', align_corners=True)
             
-            lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(images)
-            
-            #compute loss
-            loss5 = self.loss(lateral_map_5, gts)
-            loss3 = self.loss(lateral_map_3, gts)
-            loss2 = self.loss(lateral_map_2, gts)
-            loss1 = self.loss(lateral_map_1, gts)
-            loss = loss5 +loss3 + loss2 + loss1
-            
-            logits = lateral_map_5
-    
+            if(self.model_name == 'caranet'):
+
+                lateral_map_5,lateral_map_3,lateral_map_2,lateral_map_1 = self.forward(images)
+
+                #compute loss
+                loss5 = self.loss(lateral_map_5, gts)
+                loss3 = self.loss(lateral_map_3, gts)
+                loss2 = self.loss(lateral_map_2, gts)
+                loss1 = self.loss(lateral_map_1, gts)
+                loss = loss5 +loss3 + loss2 + loss1
+                
+                logits = lateral_map_5
+
+            else:
+                logits = self.forward(images)
+                loss = self.loss(logits,gts)
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
