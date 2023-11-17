@@ -109,22 +109,25 @@ class SegmentCyst(pl.LightningModule):
             # save figure
             fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
     
-    def save_predictions(self, predictions, image_name, destination_folder):
+    def save_predictions(self, predictions, images_name):
         '''Save predictions of model in a batch. Use this function in training a validation.
         
         Parameters
         ----------
-        prediction: segmentation mask (more specifically: logits) predicted from model on current image
-        image_name: name of current image
+        predictions: segmentation mask (more specifically: logits) predicted from model on current image, batch of predictions
+        images_name: name of predicted images in current batch
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
-        for pred in predictions:
+        for pred, image_name in zip(predictions,images_name):
             pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
-            Image.fromarray(pred*255).save(destination_folder/f"{image_name}.png")
+            print(pred.shape)
+            print(image_name)
+            # TODO salvare correttamente le immagini usando il percorso adatto
+            #Image.fromarray(pred*255).save(Path(destination_folder)/f"{image_name}.png")
 
 
     def on_epoch_start(self):
-        
+        # TODO far funzionare la creazione della cartella, al momento sembra che non parta questa funzione quindi capire quando e se viene chiamata
         # create dataset folder for current epoch
         self.epoch_dataset_folder = f'epoch_datasets/epoch_{self.trainer.current_epoch}'
         Path(self.epoch_dataset_folder).mkdir(parents=True, exist_ok=True)
