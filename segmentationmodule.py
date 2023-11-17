@@ -121,7 +121,7 @@ class SegmentCyst(pl.LightningModule):
         if len(prediction.shape) == 4:
             #image from training_step
             x = torch.squeeze(prediction,dim=0) 
-        
+        print(prediction.shape)
         x = (x > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
         Image.fromarray(x*255).save(destination_folder/f"{image_name}.png")
 
