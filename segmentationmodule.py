@@ -119,6 +119,7 @@ class SegmentCyst(pl.LightningModule):
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
         print(destination_folder)
+        print(image_name)
         x = prediction
         x = (x > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
         Image.fromarray(x*255).save(destination_folder/f"{image_name}.png")
@@ -127,7 +128,7 @@ class SegmentCyst(pl.LightningModule):
     def on_epoch_start(self):
         
         # create dataset folder for current epoch
-        self.epoch_dataset_folder = f'epoch_datasets/{self.current_epoch}'
+        self.epoch_dataset_folder = f'epoch_datasets/epoch_{self.trainer.current_epoch}'
         Path(self.epoch_dataset_folder).mkdir(parents=True, exist_ok=True)
         
         self.epoch_start_time.append(time())
