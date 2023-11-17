@@ -123,6 +123,7 @@ class SegmentCyst(pl.LightningModule):
             print(pred.shape)
             print(image_name)
             # TODO salvare correttamente le immagini usando il percorso adatto
+            # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
             #Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
 
 
