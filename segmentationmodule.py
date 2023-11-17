@@ -119,6 +119,7 @@ class SegmentCyst(pl.LightningModule):
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
         print(destination_folder)
+        x = prediction
         x = (x > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
         Image.fromarray(x*255).save(destination_folder/f"{image_name}.png")
 
