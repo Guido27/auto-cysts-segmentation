@@ -121,7 +121,7 @@ class SegmentCyst(pl.LightningModule):
         x = torch.squeeze(prediction,dim=0) 
         print(x.shape)
         x = (x > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
-        Image.fromarray(prediction*255).save(destination_folder/f"{image_name}.png")
+        Image.fromarray(x*255).save(destination_folder/f"{image_name}.png")
 
 
     def on_epoch_start(self):
