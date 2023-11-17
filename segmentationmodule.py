@@ -118,7 +118,7 @@ class SegmentCyst(pl.LightningModule):
         image_name: name of current image
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
-        prediction = torch.squeeze(prediction,dim=0)
+        prediction = torch.squeeze(prediction,dim=4) #squeeze batch size dimension (batch_size = 4)
         prediction = (prediction > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
         Image.fromarray(prediction*255).save(destination_folder/f"{image_name}.png")
 
