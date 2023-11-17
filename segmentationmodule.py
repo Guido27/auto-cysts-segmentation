@@ -109,8 +109,8 @@ class SegmentCyst(pl.LightningModule):
             # save figure
             fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
     
-    def save_prediction(self, prediction, image_name, destination_folder):
-        '''Save predictions of model. Use this function in training a validation.
+    def save_predictions(self, predictions, image_name, destination_folder):
+        '''Save predictions of model in a batch. Use this function in training a validation.
         
         Parameters
         ----------
@@ -118,11 +118,9 @@ class SegmentCyst(pl.LightningModule):
         image_name: name of current image
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
-        print(destination_folder)
-        print(image_name)
-        x = prediction
-        x = (x > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
-        Image.fromarray(x*255).save(destination_folder/f"{image_name}.png")
+        for pred in predictions:
+            pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
+            Image.fromarray(pred*255).save(destination_folder/f"{image_name}.png")
 
 
     def on_epoch_start(self):
@@ -134,7 +132,7 @@ class SegmentCyst(pl.LightningModule):
         self.epoch_start_time.append(time())
     
     def training_step(self, batch, batch_idx):
-        img_name = batch['image_id']
+        imgs_name = batch['image_id']
         features = batch["features"]
         masks = batch["masks"]
     
@@ -175,7 +173,7 @@ class SegmentCyst(pl.LightningModule):
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
             
             # save predictions
-            self.save_prediction(logits, img_name, self.epoch_dataset_folder)
+            self.save_predictions(logits, imgs_name, self.epoch_dataset_folder)
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
                 self.log_images(images, gts, logits, batch_idx)
@@ -209,7 +207,7 @@ class SegmentCyst(pl.LightningModule):
     def validation_step(self, batch, batch_id):
         features = batch["features"].float()
         masks = batch["masks"]
-        img_name = batch['image_id']
+        imgs_name = batch['image_id']
         
         if self.model_name in ['uacanet', 'pranet']:
             logits = self.forward(features, masks)
@@ -234,7 +232,7 @@ class SegmentCyst(pl.LightningModule):
             loss = self.loss(logits, masks)
 
         # save predictions
-        self.save_prediction(logits, img_name, self.epoch_dataset_folder)
+        self.save_predictions(logits, imgs_name, self.epoch_dataset_folder)
             
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
