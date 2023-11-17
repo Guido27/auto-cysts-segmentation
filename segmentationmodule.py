@@ -123,7 +123,7 @@ class SegmentCyst(pl.LightningModule):
             print(pred.shape)
             print(image_name)
             # TODO salvare correttamente le immagini usando il percorso adatto
-            #Image.fromarray(pred*255).save(Path(destination_folder)/f"{image_name}.png")
+            #Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
 
 
     def on_epoch_start(self):
@@ -176,7 +176,7 @@ class SegmentCyst(pl.LightningModule):
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
             
             # save predictions
-            self.save_predictions(logits, imgs_name, self.epoch_dataset_folder)
+            self.save_predictions(logits, imgs_name)
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
                 self.log_images(images, gts, logits, batch_idx)
@@ -235,7 +235,7 @@ class SegmentCyst(pl.LightningModule):
             loss = self.loss(logits, masks)
 
         # save predictions
-        self.save_predictions(logits, imgs_name, self.epoch_dataset_folder)
+        self.save_predictions(logits, imgs_name)
             
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
