@@ -184,20 +184,19 @@ class SegmentCyst(pl.LightningModule):
                 metric(logits, gts.int())
                 self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
 
-            self.log("train_loss", loss)
-            #self.log("lr", self._get_current_lr())
-
             self.manual_backward(loss)
 
             # clip gradients
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
 
             optimizer.step()
+            if rate == 1:
+                self.log("train_loss", loss)
+                #self.log("lr", self._get_current_lr())
+                sch = self.lr_schedulers()
+                sch.step()
 
-            sch= self.lr_schedulers()
-            sch.step()
-
-            return {"loss": loss}
+        return {"loss": loss}
         
 
     def _get_current_lr(self) -> torch.Tensor:
