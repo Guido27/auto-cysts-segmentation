@@ -140,6 +140,7 @@ class SegmentCyst(pl.LightningModule):
         # manual steps in order to perform multi-scale training    
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
+            print(f'rate is:{rate}')
             optimizer = self.optimizers()
             optimizer.zero_grad()
             
