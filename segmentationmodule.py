@@ -185,11 +185,9 @@ class SegmentCyst(pl.LightningModule):
                 self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
 
             self.manual_backward(loss)
-
-            # clip gradients
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
-
             optimizer.step()
+
             if rate == 1:
                 self.log("train_loss", loss)
                 #self.log("lr", self._get_current_lr())
