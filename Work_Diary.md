@@ -1,3 +1,5 @@
+## Info
+Vengonop riportate le run dei modelli usando la baseline come riferimento quindi NON con multiscale 
 ## Unet++
 
 | Optimizer | Scheduler                  | Loss          | LR     | Batch size |
