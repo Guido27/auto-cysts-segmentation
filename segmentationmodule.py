@@ -235,8 +235,7 @@ class SegmentCyst(pl.LightningModule):
             loss = self.loss(logits, masks)
 
         # save predictions
-        print('Validation step here, dataset folder for me is {self.epoch_dataset_folder}')
-        #self.save_predictions(logits, imgs_name)
+        self.save_predictions(logits, imgs_name)
             
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
