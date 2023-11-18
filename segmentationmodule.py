@@ -84,7 +84,7 @@ class SegmentCyst(pl.LightningModule):
             return opt, [scheduler]
         return opt
     
-    def log_images(self, features, masks, logits_, batch_idx):
+    def log_images(self, features, masks, logits_, batch_idx, rate):
         # logits_ is the output of the last layer of the model
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
@@ -107,7 +107,7 @@ class SegmentCyst(pl.LightningModule):
             # create folder if not exists
             Path("check_training").mkdir(parents=True, exist_ok=True)
             # save figure
-            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
+            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}_rate_{rate}.png')
     
     def save_predictions(self, predictions, images_name):
         '''Save predictions of model in a batch. Use this function in training a validation.
@@ -118,13 +118,12 @@ class SegmentCyst(pl.LightningModule):
         images_name: name of predicted images in current batch
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
-        #print(predictions.shape)
-        #for pred, image_name in zip(predictions,images_name):
-            #if(pred.shape[0] == 1024 and pred.shape[1] == 1024):
-                # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
-                #pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
-                #Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
-
+        for pred, image_name in zip(predictions,images_name):
+            pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
+            Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
+            
+    # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
+            
 
     def on_train_epoch_start(self):
         # create dataset folder for current epoch
@@ -175,11 +174,11 @@ class SegmentCyst(pl.LightningModule):
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
             
             # save predictions
-            self.save_predictions(logits, imgs_name)
+            if rate == 1:
+                self.save_predictions(logits, imgs_name)
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-                print(rate) #debug
-                self.log_images(images, gts, logits, batch_idx)
+                self.log_images(images, gts, logits, batch_idx, rate)
 
             
 
