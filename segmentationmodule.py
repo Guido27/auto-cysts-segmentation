@@ -118,7 +118,7 @@ class SegmentCyst(pl.LightningModule):
         images_name: name of predicted images in current batch
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
-        print(predictions.shape)
+        #print(predictions.shape)
         #for pred, image_name in zip(predictions,images_name):
             #if(pred.shape[0] == 1024 and pred.shape[1] == 1024):
                 # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
