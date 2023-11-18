@@ -127,9 +127,7 @@ class SegmentCyst(pl.LightningModule):
 
     def on_train_epoch_start(self):
         # create dataset folder for current epoch
-        print('******* New epoch ********')
         self.epoch_dataset_folder = f'epoch_datasets/epoch_{self.trainer.current_epoch}'
-        print(self.epoch_dataset_folder)
         Path(self.epoch_dataset_folder).mkdir(parents=True, exist_ok=True)
         self.epoch_start_time.append(time())
     
