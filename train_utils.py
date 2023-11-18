@@ -94,7 +94,7 @@ def train(args, hparams, name=None):
                 ],
         # strategy='dp',
         #gradient_clip_val=5.0,
-        num_sanity_val_steps=3,
+        num_sanity_val_steps=0, #set to 0 in order to to avoid validation steps before training starts
         sync_batchnorm=True,
         logger=logger,
         precision=16,
