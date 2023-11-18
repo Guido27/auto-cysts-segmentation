@@ -127,7 +127,7 @@ class SegmentCyst(pl.LightningModule):
             #Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
 
 
-    def on_epoch_start(self):
+    def on_train_epoch_start(self):
         # TODO far funzionare la creazione della cartella, al momento sembra che non parta questa funzione quindi capire quando e se viene chiamata
         # create dataset folder for current epoch
         self.epoch_dataset_folder = f'epoch_datasets/epoch_{self.trainer.current_epoch}'
