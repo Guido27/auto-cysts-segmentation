@@ -140,7 +140,7 @@ class SegmentCyst(pl.LightningModule):
         # manual steps in order to perform multi-scale training    
         size_rates = [0.75, 1, 1.25]
         for rate in size_rates:
-            print(f'rate is:{rate}')
+            #print(f'rate is:{rate}')
             optimizer = self.optimizers()
             optimizer.zero_grad()
             
@@ -180,9 +180,7 @@ class SegmentCyst(pl.LightningModule):
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
                 self.log_images(images, gts, logits, batch_idx)
 
-            for metric_name, metric in self.train_metrics.items():
-                metric(logits, gts.int())
-                self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
+            
 
             self.manual_backward(loss)
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
@@ -190,6 +188,10 @@ class SegmentCyst(pl.LightningModule):
 
             if rate == 1:
                 self.log("train_loss", loss)
+                
+                for metric_name, metric in self.train_metrics.items():
+                    metric(logits, gts.int())
+                    self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
                 #self.log("lr", self._get_current_lr())
                 sch = self.lr_schedulers()
                 sch.step()
