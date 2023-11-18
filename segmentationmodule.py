@@ -118,18 +118,18 @@ class SegmentCyst(pl.LightningModule):
         images_name: name of predicted images in current batch
         destination_folder: where to save image, correspond to current epoch dataset folder
         '''
-        for pred, image_name in zip(predictions,images_name):
-            pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
-            # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
-            if(pred.shape[0] == 1024 and pred.shape[1] == 1024):
-                Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
+        print(predictions.shape)
+        #for pred, image_name in zip(predictions,images_name):
+            #if(pred.shape[0] == 1024 and pred.shape[1] == 1024):
+                # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
+                #pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
+                #Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
 
 
     def on_train_epoch_start(self):
         # create dataset folder for current epoch
         self.epoch_dataset_folder = f'epoch_datasets/epoch_{self.trainer.current_epoch}'
         Path(self.epoch_dataset_folder).mkdir(parents=True, exist_ok=True)
-        
         self.epoch_start_time.append(time())
     
     def training_step(self, batch, batch_idx):
