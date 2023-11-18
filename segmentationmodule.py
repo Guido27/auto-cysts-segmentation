@@ -235,7 +235,7 @@ class SegmentCyst(pl.LightningModule):
             loss = self.loss(logits, masks)
 
         # save predictions
-        self.save_predictions(logits, imgs_name)
+        #self.save_predictions(logits, imgs_name)
             
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
