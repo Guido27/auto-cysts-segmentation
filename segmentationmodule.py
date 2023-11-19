@@ -183,19 +183,16 @@ class SegmentCyst(pl.LightningModule):
             self.manual_backward(loss)
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
             optimizer.step()
-
+            sch = self.lr_schedulers()
+            sch.step()
+            self.log("lr", self.get_lr(), on_step=True, on_epoch=True, prog_bar =True )
+            
             if rate == 1:
                 self.log("train_loss", loss)
                 for metric_name, metric in self.train_metrics.items():
                     metric(logits, gts.int())
                     self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
-                #self.log("lr", self._get_current_lr())
-
-        sch = self.lr_schedulers()
-        sch.step()
-
-        self.log("lr", self.get_lr(), on_step=True, on_epoch=True, prog_bar =True )
-
+                
         return {"loss": loss}
     
     def get_lr(self):
