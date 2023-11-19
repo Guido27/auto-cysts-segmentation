@@ -193,19 +193,13 @@ class SegmentCyst(pl.LightningModule):
 
         sch = self.lr_schedulers()
         sch.step()
-        
-        self.log("lr", self.get_lr(self.optimizers()))
+
+        self.log("lr", self.get_lr(), on_step=True, on_epoch=True, logger =True )
 
         return {"loss": loss}
-        
-
-    def _get_current_lr(self) -> torch.Tensor:
-        lr = [x["lr"] for x in self.optimizers[0].param_groups][0]
-        
-        if torch.cuda.is_available(): return torch.Tensor([lr])[0].cuda()
-        return torch.Tensor([lr])[0]
     
-    def get_lr(self, optimizer):
+    def get_lr(self):
+        optimizer = self.optimizers()
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
