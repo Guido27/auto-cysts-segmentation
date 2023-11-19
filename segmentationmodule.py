@@ -191,8 +191,8 @@ class SegmentCyst(pl.LightningModule):
                     self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
                 #self.log("lr", self._get_current_lr())
 
-            sch = self.lr_schedulers()
-            sch.step()
+        sch = self.lr_schedulers()
+        sch.step()
 
         return {"loss": loss}
         
