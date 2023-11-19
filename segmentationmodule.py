@@ -193,7 +193,8 @@ class SegmentCyst(pl.LightningModule):
 
         sch = self.lr_schedulers()
         sch.step()
-        self.log("lr", self._get_current_lr())
+        
+        self.log("lr", self.get_lr(self.optimizers()))
 
         return {"loss": loss}
         
@@ -203,6 +204,10 @@ class SegmentCyst(pl.LightningModule):
         
         if torch.cuda.is_available(): return torch.Tensor([lr])[0].cuda()
         return torch.Tensor([lr])[0]
+    
+    def get_lr(self, optimizer):
+        for param_group in optimizer.param_groups:
+            return param_group['lr']
 
     def validation_step(self, batch, batch_id):
         features = batch["features"].float()
