@@ -193,6 +193,7 @@ class SegmentCyst(pl.LightningModule):
 
         sch = self.lr_schedulers()
         sch.step()
+        self.log("lr", self._get_current_lr())
 
         return {"loss": loss}
         
