@@ -180,6 +180,11 @@ class SegmentCyst(pl.LightningModule):
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
                 self.log_images(images, gts, logits, batch_idx, rate)
 
+            self.log("train_loss", loss)
+            for metric_name, metric in self.train_metrics.items():
+                metric(logits, gts.int())
+                self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
+
             self.manual_backward(loss)
             
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
@@ -190,11 +195,6 @@ class SegmentCyst(pl.LightningModule):
             sch.step()
 
             #self.log("lr", self.get_lr(), on_step=True, on_epoch=True, prog_bar =True )
-            
-            self.log("train_loss", loss)
-            for metric_name, metric in self.train_metrics.items():
-                metric(logits, gts.int())
-                self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
                 
         return {"loss": loss}
     
