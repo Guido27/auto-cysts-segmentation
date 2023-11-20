@@ -197,13 +197,6 @@ class SegmentCyst(pl.LightningModule):
                 
         return {"loss": loss}
     
-    def on_train_epoch_end(self):
-        #  update LR after each train epoch
-        self.log("LR", self.get_lr(), on_step=True, on_epoch=True, prog_bar=False)
-        sch = self.lr_schedulers()
-        sch.step()
-
-    
     def get_lr(self):
         optimizer = self.optimizers()
         for param_group in optimizer.param_groups:
@@ -267,6 +260,10 @@ class SegmentCyst(pl.LightningModule):
 
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
+        #  update LR after each train epoch
+        self.log("LR", self.get_lr(), on_step=True, on_epoch=True, prog_bar=False)
+        sch = self.lr_schedulers()
+        sch.step()
 
     # def on_train_end(self):
     #     import matplotlib.pyplot as plt
