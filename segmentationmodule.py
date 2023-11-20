@@ -191,10 +191,9 @@ class SegmentCyst(pl.LightningModule):
             
             optimizer.step()
             
-            sch = self.lr_schedulers()
-            sch.step()
-
-            #self.log("lr", self.get_lr(), on_step=True, on_epoch=True, prog_bar =True )
+        # scheduler step after all resizes for each batch    
+        sch = self.lr_schedulers()
+        sch.step()
                 
         return {"loss": loss}
     
