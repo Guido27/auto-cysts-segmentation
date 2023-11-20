@@ -137,7 +137,7 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"]
     
         # manual steps in order to perform multi-scale training    
-        size_rates = [0.75, 1, 1.25]
+        size_rates = [0.75, 1.25, 1]
         for rate in size_rates:
             
             optimizer = self.optimizers()
@@ -181,10 +181,14 @@ class SegmentCyst(pl.LightningModule):
                 self.log_images(images, gts, logits, batch_idx, rate)
 
             self.manual_backward(loss)
+            
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+            
             optimizer.step()
+            
             sch = self.lr_schedulers()
             sch.step()
+
             #self.log("lr", self.get_lr(), on_step=True, on_epoch=True, prog_bar =True )
             
             self.log("train_loss", loss)
