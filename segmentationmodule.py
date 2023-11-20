@@ -199,7 +199,7 @@ class SegmentCyst(pl.LightningModule):
     
     def on_train_epoch_end(self):
         #  update LR after each train epoch
-        self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=False)
+        self.log("LR", self.get_lr(), on_step=True, on_epoch=True, prog_bar=False)
         sch = self.lr_schedulers()
         sch.step()
 
