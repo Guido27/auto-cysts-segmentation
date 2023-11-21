@@ -1,7 +1,7 @@
 from pathlib import Path
 import torch
 
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 from utils import object_from_dict, find_average, binary_mean_iou
 
 from PIL import Image
@@ -75,6 +75,10 @@ class SegmentCyst(pl.LightningModule):
         if self.hparams.scheduler is not None:
             scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
 
+            if type(scheduler) == LambdaLR:
+                lambda1 = lambda epoch: 0.1 ** (epoch // 30)
+                scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer, lr_lambda = lambda1 )
+                
             if type(scheduler) == ReduceLROnPlateau:
                     return {
                        'optimizer': optimizer,
