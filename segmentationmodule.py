@@ -73,19 +73,24 @@ class SegmentCyst(pl.LightningModule):
         opt = [optimizer]
         
         if self.hparams.scheduler is not None:
-            scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
 
             if type(scheduler) == LambdaLR:
+            
                 lambda1 = lambda epoch: 0.1 ** (epoch // 10)
                 scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer, lr_lambda = lambda1 )
+            
+            else:
+                
+                scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
 
-            if type(scheduler) == ReduceLROnPlateau:
-                    return {
-                       'optimizer': optimizer,
-                       'lr_scheduler': scheduler,
-                       'monitor': 'val_iou'
-                   }
-            return opt, [scheduler]
+                if type(scheduler) == ReduceLROnPlateau:
+                        return {
+                           'optimizer': optimizer,
+                           'lr_scheduler': scheduler,
+                           'monitor': 'val_iou'
+                       }
+                return opt, [scheduler]
+            
         return opt
     
     def log_images(self, features, masks, logits_, batch_idx, rate):
@@ -265,9 +270,9 @@ class SegmentCyst(pl.LightningModule):
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
         #  update LR after each train epoch
-        self.log("LR", self.get_lr(), on_step=True, on_epoch=True, prog_bar=False)
         sch = self.lr_schedulers()
         sch.step()
+        self.log("LR", self.get_lr(), on_step=True, on_epoch=True, prog_bar=False)
 
     # def on_train_end(self):
     #     import matplotlib.pyplot as plt
