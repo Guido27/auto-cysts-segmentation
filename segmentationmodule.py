@@ -89,7 +89,8 @@ class SegmentCyst(pl.LightningModule):
                            'lr_scheduler': scheduler,
                            'monitor': 'val_iou'
                        }
-                return opt, [scheduler]
+                
+            return opt, [scheduler]
             
         return opt
     
