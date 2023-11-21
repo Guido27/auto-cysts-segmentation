@@ -76,9 +76,9 @@ class SegmentCyst(pl.LightningModule):
             scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
 
             if type(scheduler) == LambdaLR:
-                lambda1 = lambda epoch: 0.1 ** (epoch // 30)
+                lambda1 = lambda epoch: 0.1 ** (epoch // 10)
                 scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer, lr_lambda = lambda1 )
-                
+
             if type(scheduler) == ReduceLROnPlateau:
                     return {
                        'optimizer': optimizer,
