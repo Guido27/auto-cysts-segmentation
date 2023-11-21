@@ -200,8 +200,11 @@ class SegmentCyst(pl.LightningModule):
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
             
             optimizer.step()
+            # scheduler step after each optimizer.step(), i.e. one for each batch in each resize    
+            #sch = self.lr_schedulers()
+            #sch.step()
             
-        # scheduler step after all resizes for each batch    
+        # scheduler step after entire batch (after for loop on rates for each batch)    
         #sch = self.lr_schedulers()
         #sch.step()
                 
@@ -270,7 +273,7 @@ class SegmentCyst(pl.LightningModule):
 
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
-        #  update LR after each train epoch
+        #  scheduler.step() after each train epoch
         sch = self.lr_schedulers()
         sch.step()
         self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
