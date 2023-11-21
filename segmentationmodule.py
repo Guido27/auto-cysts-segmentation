@@ -74,8 +74,7 @@ class SegmentCyst(pl.LightningModule):
         
         if self.hparams.scheduler is not None:
             
-            print(self.hparams.scheduler)
-            if self.hparams.scheduler == 'LambdaLR':
+            if self.hparams.scheduler[type] == 'torch.optim.lr_scheduler.LambdaLR':
             
                 lambda1 = lambda epoch: 0.1 ** (epoch // 10)
                 scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer, lr_lambda = lambda1 )
