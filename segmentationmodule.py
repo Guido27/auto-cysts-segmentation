@@ -1,7 +1,7 @@
 from pathlib import Path
 import torch
 
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 from utils import object_from_dict, find_average, binary_mean_iou
 
 from PIL import Image
@@ -50,6 +50,8 @@ class SegmentCyst(pl.LightningModule):
         })
         self.epoch_start_time = []
 
+        self.epoch_dataset_folder = ''
+
         # set automatic optimization as False
         self.automatic_optimization = False
 
@@ -71,18 +73,28 @@ class SegmentCyst(pl.LightningModule):
         opt = [optimizer]
         
         if self.hparams.scheduler is not None:
-            scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
+            
+            if self.hparams.scheduler['type'] == 'torch.optim.lr_scheduler.LambdaLR':
+            
+                lambda1 = lambda epoch: 0.1 ** (epoch // 2)
+                scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer, lr_lambda = lambda1 )
+            
+            else:
+                
+                scheduler = object_from_dict(self.hparams.scheduler, optimizer=optimizer)
 
-            if type(scheduler) == ReduceLROnPlateau:
-                    return {
-                       'optimizer': optimizer,
-                       'lr_scheduler': scheduler,
-                       'monitor': 'val_iou'
-                   }
+                if type(scheduler) == ReduceLROnPlateau:
+                        return {
+                           'optimizer': optimizer,
+                           'lr_scheduler': scheduler,
+                           'monitor': 'val_iou'
+                       }
+                
             return opt, [scheduler]
+            
         return opt
     
-    def log_images(self, features, masks, logits_, batch_idx):
+    def log_images(self, features, masks, logits_, batch_idx, rate):
         # logits_ is the output of the last layer of the model
         for img_idx, (image, y_true, y_pred) in enumerate(zip(features, masks, logits_)):
             
@@ -105,19 +117,39 @@ class SegmentCyst(pl.LightningModule):
             # create folder if not exists
             Path("check_training").mkdir(parents=True, exist_ok=True)
             # save figure
-            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}.png')
+            fig.savefig(f'check_training/epoch_{self.current_epoch}_batch_{batch_idx}_img_{img_idx}_rate_{rate}.png')
+    
+    def save_predictions(self, predictions, images_name):
+        '''Save predictions of model in a batch. Use this function in training a validation.
+        
+        Parameters
+        ----------
+        predictions: segmentation mask (more specifically: logits) predicted from model on current image, batch of predictions
+        images_name: name of predicted images in current batch
+        destination_folder: where to save image, correspond to current epoch dataset folder
+        '''
+        for pred, image_name in zip(predictions,images_name):
+            pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
+            Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
 
-    def on_epoch_start(self):
+    # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
+            
+
+    def on_train_epoch_start(self):
+        # create dataset folder for current epoch
+        self.epoch_dataset_folder = f'epoch_datasets/epoch_{self.trainer.current_epoch}'
+        Path(self.epoch_dataset_folder).mkdir(parents=True, exist_ok=True)
         self.epoch_start_time.append(time())
     
     def training_step(self, batch, batch_idx):
-
+        imgs_name = batch['image_id']
         features = batch["features"]
         masks = batch["masks"]
     
         # manual steps in order to perform multi-scale training    
-        size_rates = [0.75, 1, 1.25]
+        size_rates = [0.75, 1.25, 1]
         for rate in size_rates:
+            
             optimizer = self.optimizers()
             optimizer.zero_grad()
             
@@ -150,39 +182,43 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 loss = self.loss(logits,gts)
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
+            
+            # save predictions
+            if rate == 1:
+                self.save_predictions(logits, imgs_name)
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-                self.log_images(images, gts, logits, batch_idx)
+                self.log_images(images, gts, logits, batch_idx, rate)
 
+            self.log("train_loss", loss)
             for metric_name, metric in self.train_metrics.items():
                 metric(logits, gts.int())
                 self.log(f"train_{metric_name}", metric, on_step=True, on_epoch=True, prog_bar=True)
 
-            self.log("train_loss", loss)
-            #self.log("lr", self._get_current_lr())
-
             self.manual_backward(loss)
-
-            # clip gradients
+            
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
-
+            
             optimizer.step()
-
-            sch= self.lr_schedulers()
-            sch.step()
-
-            return {"loss": loss}
-        
-
-    def _get_current_lr(self) -> torch.Tensor:
-        lr = [x["lr"] for x in self.optimizers[0].param_groups][0]
-        
-        if torch.cuda.is_available(): return torch.Tensor([lr])[0].cuda()
-        return torch.Tensor([lr])[0]
+            # scheduler step after each optimizer.step(), i.e. one for each batch in each resize    
+            #sch = self.lr_schedulers()
+            #sch.step()
+            
+        # scheduler step after entire batch (after for loop on rates for each batch)    
+        #sch = self.lr_schedulers()
+        #sch.step()
+                
+        return {"loss": loss}
+    
+    def get_lr(self):
+        optimizer = self.optimizers()
+        for param_group in optimizer.param_groups:
+            return param_group['lr']
 
     def validation_step(self, batch, batch_id):
         features = batch["features"].float()
         masks = batch["masks"]
+        imgs_name = batch['image_id']
         
         if self.model_name in ['uacanet', 'pranet']:
             logits = self.forward(features, masks)
@@ -205,6 +241,9 @@ class SegmentCyst(pl.LightningModule):
         else:
             logits = self.forward(features)
             loss = self.loss(logits, masks)
+
+        # save predictions
+        self.save_predictions(logits, imgs_name)
             
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
         
@@ -234,6 +273,10 @@ class SegmentCyst(pl.LightningModule):
 
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
+        #  scheduler.step() after each train epoch
+        sch = self.lr_schedulers()
+        sch.step()
+        self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
     # def on_train_end(self):
     #     import matplotlib.pyplot as plt

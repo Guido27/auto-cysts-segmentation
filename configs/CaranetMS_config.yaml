@@ -17,9 +17,7 @@ loss:
   type: losses.BCEWithLogitsLoss 
 
 scheduler:
-  type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
-  T_0: 10
-  T_mult: 2
+  type: torch.optim.lr_scheduler.LambdaLR
 
 checkpoint_callback:
   dirpath: "./cyst_checkpoints/Nature_v4"
@@ -31,7 +29,7 @@ checkpoint_callback:
 earlystopping_callback:
   monitor: val_loss
   min_delta: 0.005
-  patience: 20
+  patience: 10
   verbose: False
   mode: min
 
