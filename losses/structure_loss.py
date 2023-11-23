@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+# Loss from caranet repo
 class structure_loss(nn.Module):
     def __init__(self):
         super(structure_loss,self).__init__()
