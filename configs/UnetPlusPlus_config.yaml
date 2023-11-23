@@ -1,7 +1,7 @@
 ---
 seed: 1989
 
-num_workers: 1
+num_workers: 2
 experiment_name: "training"
 image_path: "artifacts/dataset_imn/images"
 mask_path: "artifacts/dataset_imn/masks"
