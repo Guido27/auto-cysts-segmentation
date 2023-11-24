@@ -201,8 +201,8 @@ class SegmentCyst(pl.LightningModule):
             
             optimizer.step()
             # scheduler step after each optimizer.step(), i.e. one for each batch in each resize    
-            sch = self.lr_schedulers()
-            sch.step()
+            #sch = self.lr_schedulers()
+            #sch.step()
             
         # scheduler step after entire batch (after for loop on rates for each batch)    
         #sch = self.lr_schedulers()
@@ -274,9 +274,9 @@ class SegmentCyst(pl.LightningModule):
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
         #  scheduler.step() after each train epoch
-        #sch = self.lr_schedulers()
-        #sch.step()
-        #self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
+        sch = self.lr_schedulers()
+        sch.step()
+        self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
     # def on_train_end(self):
     #     import matplotlib.pyplot as plt
