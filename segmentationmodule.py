@@ -131,8 +131,6 @@ class SegmentCyst(pl.LightningModule):
         for pred, image_name in zip(predictions,images_name):
             pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
             Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
-
-    # TODO capire se salvare solo quelle con dimensione 1024x1024 o anche le rescale (questo forse è meglio chiederlo al prof)
             
 
     def on_train_epoch_start(self):
@@ -183,7 +181,8 @@ class SegmentCyst(pl.LightningModule):
                 loss = self.loss(logits,gts)
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
             
-            # save predictions
+            # save predictions and use cyst classifier 
+            # TODO implement classifier
             if rate == 1:
                 self.save_predictions(logits, imgs_name)
 
