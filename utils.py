@@ -348,8 +348,6 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32)
     if coordinates is not None:
-      #debug
-      print(image.shape)
       for k, (x,y,w,h) in enumerate(coordinates):
         # avoid that cysts with no space for padding cause errors: get cyst with lower padding
         p = padding_default
@@ -361,7 +359,6 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
              p = p-1
 
         resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
-        print(resized.shape) #debug
         t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
 
     return t
