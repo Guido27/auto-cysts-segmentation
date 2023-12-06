@@ -244,7 +244,7 @@ class SegmentCyst(pl.LightningModule):
                 
                 for m, p, i in zip(masks, logits, features):
                     # TODO extract wrong predictions as negatives and GT cyst as positives
-                    
+                    print(i.shape) # debug
                     wrong_coordinates = identify_wrong_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > .5).detach().squeeze().cpu().numpy().astype(np.uint8)
@@ -252,7 +252,7 @@ class SegmentCyst(pl.LightningModule):
                     print(len(wrong_coordinates))
                     negative_patches_tensor = extract_wrong_predictions(
                         wrong_coordinates, i.detach().permute(1,2,0).cpu().numpy()
-                        # image i is reshaped because is C,H,W while slicing in extract_wrong_predictions expects to receive a H,W,C image
+                        # image i is reshaped because has (H,W,C) shape, while slicing in extract_wrong_predictions expects to receive a C,H,W image
                     )
                     # debug
                     print(

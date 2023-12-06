@@ -341,10 +341,10 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     Parameters
     ----------
     coordinates: list of tuples (x,y,w,h) representing coordinates of identified wrong predictions
-    image: original image from which patches are extracted and returned of shape C x H x W, C is 3 because it's a RGB image
+    image: original image from which patches are extracted and returned. Image shape has to be (C*H*W), C is 3 because it's an RGB image
     Returns
     -------
-    Tensor of size (N, p_size, p_size, 3) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
+    Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
     
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32)
     if coordinates is not None:
