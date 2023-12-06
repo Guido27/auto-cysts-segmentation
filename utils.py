@@ -353,6 +353,8 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
         p = padding_default
         while True:
           crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+          #debug
+          print(crop.shape)
           if (crop.shape[0] != 0 and crop.shape[1] != 0) or p == -1:
             # debug
             print(f'wrong number {k}: Exiting While True')
