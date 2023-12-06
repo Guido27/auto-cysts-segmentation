@@ -11,6 +11,8 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import StratifiedKFold, GroupKFold
 import cv2
 import re
+from scipy.sparse import csr_matrix
+from pytorch_toolbelt.utils.torch_utils import image_to_tensor
 
 import numpy as np
 import torch
@@ -306,3 +308,58 @@ def split_dataset(hparams):
         "valid": val_samp,
         "test": test_samp
     }
+
+### Functions useful for classifier after segmentation model
+
+def identify_wrong_predictions(gt, pred, cutoff=0):
+  """Return a list of wrong patches coordinates segmented in pred
+  Parameters
+  ----------
+  gt: ground truth mask
+  pred: prediction from segmentation model
+  """
+  w_cysts = []
+  gt_contours, _ = cv2.findContours(gt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+  pred_contours, _ = cv2.findContours(pred, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+  gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
+  pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
+  pred_seps = tuple([csr_matrix(cv2.fillPoly(np.zeros_like(gt), pts=[c], color=(1))) for c in pred_contours])
+
+  sparse_gt = csr_matrix(gt)
+  for single_pred, c in zip(pred_seps, pred_contours):
+      if not single_pred.multiply(sparse_gt).count_nonzero(): # wrong cyst
+        x,y,w,h = cv2.boundingRect(c)
+        w_tuple = (x,y,w,h)
+        w_cysts.append(w_tuple)
+  return w_cysts if len(w_cysts) !=0 else None
+
+
+
+def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64):
+    """Extract wrong cysts predicted in pred tensor from original image using coordinates passed. Padding used is 20 and each cyst extracted is resized to 64x64
+    Parameters
+    ----------
+    coordinates: list of tuples (x,y,w,h) representing coordinates of identified wrong predictions
+    image: original image from which patches are extracted and returned
+    Returns
+    -------
+    Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
+    if coordinates is not None:
+      
+      t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32)
+
+      for k, (x,y,w,h) in enumerate(coordinates):
+        # avoid that cysts with no space for padding cause errors: get cyst with lower padding
+        p = padding_default
+        while True:
+          crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+          if crop.shape[0] != 0 and crop.shape[1] != 0:
+            break
+          else:
+             p = p-1
+
+        resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+        t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
+
+    return t

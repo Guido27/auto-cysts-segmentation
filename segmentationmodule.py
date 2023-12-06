@@ -2,7 +2,7 @@ from pathlib import Path
 import torch
 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
-from utils import object_from_dict, find_average, binary_mean_iou
+from utils import object_from_dict, find_average, binary_mean_iou,identify_wrong_predictions, extract_wrong_predictions
 
 from PIL import Image
 import pytorch_lightning as pl
@@ -131,7 +131,10 @@ class SegmentCyst(pl.LightningModule):
         for pred, image_name in zip(predictions,images_name):
             pred = (pred > self.hparams.test_parameters['threshold']).permute(1,2,0).squeeze().cpu().numpy().astype(np.uint8)
             Image.fromarray(pred*255).save(Path(self.epoch_dataset_folder)/f"{image_name}.png")
-            
+    
+    def extract_patches(self, segmentation_prediction, segmentation_GT_mask):
+        """Extract tensors of predicted cysts in segmentation prediciton from segm. model."""
+
 
     def on_train_epoch_start(self):
         # create dataset folder for current epoch
@@ -182,9 +185,16 @@ class SegmentCyst(pl.LightningModule):
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
             
             # save predictions and use cyst classifier 
-            # TODO implement classifier
+            # TODO implement classifier and patch extraction from segmentation prediction 
             if rate == 1:
-                self.save_predictions(logits, imgs_name)
+                for m, p, i  in zip(masks, logits, features):
+                    #TODO extract wrong predictions as negatives and GT cyst as positives
+                    wrong_coordinates = identify_wrong_predictions(m,p)
+                    negative_patches_tensor = extract_wrong_predictions(wrong_coordinates, i)
+                    #debug
+                    print(f'Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ')
+
+                #self.save_predictions(logits, imgs_name)
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
                 self.log_images(images, gts, logits, batch_idx, rate)
