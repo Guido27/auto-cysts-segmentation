@@ -337,16 +337,19 @@ def identify_wrong_predictions(gt, pred, cutoff=0):
 
 
 def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64):
-    """Extract wrong cysts predicted in pred tensor from original image using coordinates passed. Padding used is 20 and each cyst extracted is resized to 64x64
+    """Extract from original RGB image wrong cysts predicted from segmentation model, their coordinates have to be previously computed with "identify_wrong_predictions" and passed. 
+    Each extracted cyst is resized to 64x64 dimension.
+
     Parameters
     ----------
     coordinates: list of tuples (x,y,w,h) representing coordinates of identified wrong predictions
-    image: original image from which patches are extracted and returned. Image shape has to be (C*H*W), C is 3 because it's an RGB image
+    image: original image from which patches are extracted. Image shape has to be (C*H*W), C should be 3 because of RGB image.
+    
     Returns
     -------
-    Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
+    t: Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
     
-    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32)
+    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
     if coordinates is not None:
       for k, (x,y,w,h) in enumerate(coordinates):
         # avoid that cysts with no space for padding cause errors: get cyst with lower padding
@@ -360,5 +363,6 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
 
         resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
         t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
-
+        #image_to_tensor permute dimensions: resized is np.array of shape (H,W,C), after image_to_tensor is a tensor of shape (C,H,W)
+    
     return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
