@@ -348,13 +348,13 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32)
     if coordinates is not None:
+      #debug
+      print(image.shape)
       for k, (x,y,w,h) in enumerate(coordinates):
         # avoid that cysts with no space for padding cause errors: get cyst with lower padding
         p = padding_default
         while True:
           crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
-          #debug
-          print(crop.shape)
           if (crop.shape[0] != 0 and crop.shape[1] != 0) or p == -1:
             # debug
             print(f'wrong number {k}: Exiting While True')
