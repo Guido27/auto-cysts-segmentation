@@ -244,8 +244,8 @@ class SegmentCyst(pl.LightningModule):
                 
                 for m, p, i in zip(masks, logits, features):
                     # TODO extract wrong predictions as negatives and GT cyst as positives
-                    print(m.shape)
-                    print(p.shape)
+                    print(i.shape) #debug
+                    
                     wrong_coordinates = identify_wrong_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > .5).detach().squeeze().cpu().numpy().astype(np.uint8)
