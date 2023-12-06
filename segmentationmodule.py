@@ -251,7 +251,7 @@ class SegmentCyst(pl.LightningModule):
                     )
                     print(len(wrong_coordinates))
                     negative_patches_tensor = extract_wrong_predictions(
-                        wrong_coordinates, i.detach().permute(1,2,0).cpu().numpy()
+                        wrong_coordinates, i.detach().cpu().numpy()
                         # image i is reshaped because has (H,W,C) shape, while slicing in extract_wrong_predictions expects to receive a C,H,W image
                     )
                     # debug
