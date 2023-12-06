@@ -358,6 +358,7 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
             print(f'wrong number {k}: Exiting While True')
             break
           else:
+             print(f'wrong number {k}, p = {p}')
              p = p-1
 
         resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
