@@ -341,7 +341,7 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     Parameters
     ----------
     coordinates: list of tuples (x,y,w,h) representing coordinates of identified wrong predictions
-    image: original image from which patches are extracted and returned
+    image: original image from which patches are extracted and returned of shape C x H x W, C is 3 because it's a RGB image
     Returns
     -------
     Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
@@ -354,7 +354,7 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
         # avoid that cysts with no space for padding cause errors: get cyst with lower padding
         p = padding_default
         while True:
-          crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+          crop = image[:, (y-p):(y+h+p), (x-p):(x+w+p)]
           if (crop.shape[0] != 0 and crop.shape[1] != 0) or p == -1:
             # debug
             print(f'wrong number {k}: Exiting While True')
