@@ -188,9 +188,8 @@ class SegmentCyst(pl.LightningModule):
             # TODO implement classifier and patch extraction from segmentation prediction 
             if rate == 1:
                 for m, p, i  in zip(masks, logits, features):
-                    print(m.shape)
                     #TODO extract wrong predictions as negatives and GT cyst as positives
-                    wrong_coordinates = identify_wrong_predictions(m.detach().cpu().numpy(),p.detach().cpu().numpy())
+                    wrong_coordinates = identify_wrong_predictions(m.detach().squeeze().cpu().numpy(),p.detach().cpu().numpy())
                     negative_patches_tensor = extract_wrong_predictions(wrong_coordinates, i.detach().cpu().numpy())
                     #debug
                     print(f'Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ')
