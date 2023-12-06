@@ -252,7 +252,7 @@ class SegmentCyst(pl.LightningModule):
                     )
                     print(len(wrong_coordinates))
                     negative_patches_tensor = extract_wrong_predictions(
-                        wrong_coordinates, i.detach().cpu().numpy()
+                        wrong_coordinates, i.detach().reshape(1,2,0).cpu().numpy()
                     )
                     # debug
                     print(

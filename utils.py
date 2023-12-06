@@ -354,7 +354,7 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
         # avoid that cysts with no space for padding cause errors: get cyst with lower padding
         p = padding_default
         while True:
-          crop = image[:, (y-p):(y+h+p), (x-p):(x+w+p)]
+          crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
           if (crop.shape[0] != 0 and crop.shape[1] != 0):
             break
           else:
