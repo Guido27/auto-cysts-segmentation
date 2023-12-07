@@ -373,7 +373,7 @@ def extract_real_cysts(mask, image, p_size=64, padding_default=20):
     
     Parameters
     ----------
-    mask: Ground truth segmentation mask associated with RGB image
+    mask: Ground truth segmentation mask associated with RGB image, passed one is a float tensor converted to numpy array with np.uint8 dtype.
     image: Original RGB image from which positive patches have to be extracted, expected to have shape (H*W*C), C should be 3 because of RGB images
     
     Return
@@ -384,12 +384,9 @@ def extract_real_cysts(mask, image, p_size=64, padding_default=20):
 
     #convert mask to a greyscale and threshold it to extract contours of cysts
     #imgray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    print(mask.shape)#debug
-    ret, thresh = cv2.threshold(mask*255, 127, 255, 0)
+    ret, thresh = cv2.threshold(mask*255, 127, 255, 0) #mask * 255 because threshold expects to have integer values between 0 and 255
     # find contours in thresholded image
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    print(f'{len(contours)} positive patches found') #debug
     
     #extract cysts from original image using contours
     for k in range(len(contours)):
