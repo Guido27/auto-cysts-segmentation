@@ -382,8 +382,8 @@ def extract_real_cysts(mask, image, p_size=64, padding_default=20):
     
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
     #convert mask to a greyscale and threshold it to extract contours of cysts
-    imgray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(imgray, 127, 255, 0)
+    #imgray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(image, 127, 255, 0)
     # find contours in thresholded image
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
