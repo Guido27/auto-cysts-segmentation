@@ -275,6 +275,7 @@ class SegmentCyst(pl.LightningModule):
                         classifier_predictions = torch.cat((classifier_predictions,r))
                     
                     classifier_predictions = classifier_predictions[1:]
+                    print(classifier_predictions.shape)
 
 
                     
