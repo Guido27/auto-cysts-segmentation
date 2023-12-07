@@ -271,7 +271,7 @@ class SegmentCyst(pl.LightningModule):
                     
                     classifier_predictions = torch.empty((1)) 
                     for patch in patches:
-                        r = self.classifier(patch)
+                        r = self.classifier(patch.unsqueeze(0))
                         classifier_predictions = torch.cat((classifier_predictions,r))
                     
                     classifier_predictions = classifier_predictions[1:]
