@@ -8,6 +8,7 @@ from utils import (
     binary_mean_iou,
     identify_wrong_predictions,
     extract_wrong_predictions,
+    extract_real_cysts,
 )
 
 from PIL import Image
@@ -241,21 +242,27 @@ class SegmentCyst(pl.LightningModule):
             # save predictions and use cyst classifier
             # TODO implement classifier and patch extraction from segmentation prediction
             if rate == 1:
-                
                 for m, p, i in zip(masks, logits, features):
-                    # TODO extract wrong predictions as negatives and GT cyst as positives
+                    # m GT mask, i image, p segmentation predictions from model
                     wrong_coordinates = identify_wrong_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (p > .5).detach().squeeze().cpu().numpy().astype(np.uint8)
+                        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                     )
                     negative_patches_tensor = extract_wrong_predictions(
-                        wrong_coordinates, i.detach().permute(1,2,0).cpu().numpy()
+                        wrong_coordinates,
+                        i.detach().permute(1, 2, 0).cpu().numpy()
                         # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
                     )
-                    # debug
-                    print(
-                        f"Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor "
+
+                    positive_patches_tensor = extract_real_cysts(
+                        m.detach().squeeze().cpu().numpy().astype(np.uint8),
+                        i.detach().permute(1, 2, 0).cpu().numpy(),
                     )
+
+                    print(f'{positive_patches_tensor.shape} computed positive tensor')#debug
+
+                    # debug
+                    # print(f"Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ")
 
                 # self.save_predictions(logits, imgs_name)
 

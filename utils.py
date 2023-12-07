@@ -345,7 +345,7 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     coordinates: list of tuples (x,y,w,h) representing coordinates of identified wrong predictions
     image: original image from which patches are extracted. Image shape has to be (C*H*W), C should be 3 because of RGB image.
     
-    Returns
+    Return
     -------
     t: Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
     
@@ -364,5 +364,46 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
         resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
         t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
         #image_to_tensor permute dimensions: resized is np.array of shape (H,W,C), after image_to_tensor is a tensor of shape (C,H,W)
+    
+    return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
+
+
+def extract_real_cysts(mask, image, p_size=64, padding_default=20):
+    """Extract from RGB image true cysts using the ground truth mask a.k.a positive patches for classifier. Each patch will be resized to 64x64 dimension.
+    
+    Parameters
+    ----------
+    mask: Ground truth segmentation mask associated with RGB image
+    image: Original RGB image from which positive patches have to be extracted, expected to have shape (H*W*C), C should be 3 because of RGB images
+    
+    Return
+    -------
+    t: Tensor oh shape (N*C*p_size*p_size) where N is the number of positive patches extracted"""
+    
+    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
+    #convert mask to a greyscale and threshold it to extract contours of cysts
+    imgray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(imgray, 127, 255, 0)
+    # find contours in thresholded image
+    contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    print(f'{len(contours)} positive patches found') #debug
+    
+    #extract cysts from original image using contours
+    for k in range(len(contours)):
+      cnt = contours[k]
+      x,y,w,h = cv2.boundingRect(cnt)
+
+      # avoid that cysts with no space for padding cause errors: get cyst with lower padding
+      p = padding_default
+      while True:
+        crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+        if crop.shape[0] != 0 and crop.shape[1] != 0:
+          break
+        else:
+           p = p-1
+
+      resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+      t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
     
     return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
