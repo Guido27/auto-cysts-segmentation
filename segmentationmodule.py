@@ -251,6 +251,7 @@ class SegmentCyst(pl.LightningModule):
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                     )
+
                     negative_patches_tensor = extract_wrong_predictions(
                         wrong_coordinates,
                         i.detach().permute(1, 2, 0).cpu().numpy()
@@ -259,9 +260,24 @@ class SegmentCyst(pl.LightningModule):
 
                     positive_patches_tensor = extract_real_cysts(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        i.detach().permute(1, 2, 0).cpu().numpy(),
+                        i.detach().permute(1, 2, 0).cpu().numpy()
                     )
 
+                    positive_labels = torch.ones(positive_patches_tensor.shape[0])
+                    negative_labels = torch.zeros(negative_patches_tensor.shape[0])
+                    
+                    patches = torch.cat((positive_patches_tensor,negative_patches_tensor), dim=0)
+                    labels = torch.cat((positive_labels, negative_labels), dim=0)
+                    
+                    classifier_predictions = torch.empty((1)) 
+                    for patch in patches:
+                        r = self.classifier(patch)
+                        classifier_predictions = torch.cat((classifier_predictions,r))
+                    
+                    classifier_predictions = classifier_predictions[1:]
+
+
+                    
                     #print(f'{positive_patches_tensor.shape} computed positive tensor') #debug
                     # print(f"Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ") #debug
 
