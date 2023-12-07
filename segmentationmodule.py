@@ -1,5 +1,6 @@
 from pathlib import Path
 import torch
+import torch.nn as nn
 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 from utils import (
@@ -35,6 +36,7 @@ class SegmentCyst(pl.LightningModule):
         self.model = object_from_dict(hparams["model"])
 
         self.classifier = res2net50(pretrained=True)
+        self.probs = nn.Softmax(dim=1)
 
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
@@ -270,14 +272,16 @@ class SegmentCyst(pl.LightningModule):
                     labels = torch.cat((positive_labels, negative_labels), dim=0)
                     
                     classifier_predictions = torch.empty((1)).cuda()
+                    l = []
                     for patch in patches:
                         r = self.classifier(patch.unsqueeze(0))
-                        print(r.shape)
-                        
-                        classifier_predictions = torch.cat((classifier_predictions,r))
-                    
-                    classifier_predictions = classifier_predictions[1:]
-                    print(classifier_predictions.shape)
+                        prob = self.probs(r)
+                        top_p, top_class = prob.topk(1, dim = -1)
+                        l.append(top_class) #debug, use a list now, should be a tensor later
+                        #classifier_predictions = torch.cat((classifier_predictions,r))
+                    print(l)#debug
+                    #classifier_predictions = classifier_predictions[1:]
+                    #print(classifier_predictions.shape)
 
 
                     
