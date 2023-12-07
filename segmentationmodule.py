@@ -269,7 +269,7 @@ class SegmentCyst(pl.LightningModule):
                     patches = torch.cat((positive_patches_tensor,negative_patches_tensor), dim=0).cuda()
                     labels = torch.cat((positive_labels, negative_labels), dim=0)
                     
-                    classifier_predictions = torch.empty((1)) 
+                    classifier_predictions = torch.empty((1)).cuda()
                     for patch in patches:
                         r = self.classifier(patch.unsqueeze(0))
                         classifier_predictions = torch.cat((classifier_predictions,r))
