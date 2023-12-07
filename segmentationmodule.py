@@ -23,6 +23,7 @@ from time import time
 import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
+from models import res2net50
 
 
 class SegmentCyst(pl.LightningModule):
@@ -32,6 +33,8 @@ class SegmentCyst(pl.LightningModule):
 
         self.model_name = self.hparams.model.get("name", "").lower()
         self.model = object_from_dict(hparams["model"])
+
+        self.classifier = res2net50(pretrained=True)
 
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
@@ -240,7 +243,7 @@ class SegmentCyst(pl.LightningModule):
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             # save predictions and use cyst classifier
-            # TODO implement classifier and patch extraction from segmentation prediction
+            # TODO implement classifier 
             if rate == 1:
                 for m, p, i in zip(masks, logits, features):
                     # m GT mask, i image, p segmentation predictions from model
@@ -259,10 +262,8 @@ class SegmentCyst(pl.LightningModule):
                         i.detach().permute(1, 2, 0).cpu().numpy(),
                     )
 
-                    print(f'{positive_patches_tensor.shape} computed positive tensor')#debug
-
-                    # debug
-                    # print(f"Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ")
+                    #print(f'{positive_patches_tensor.shape} computed positive tensor') #debug
+                    # print(f"Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ") #debug
 
                 # self.save_predictions(logits, imgs_name)
 
