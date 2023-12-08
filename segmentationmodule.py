@@ -35,7 +35,8 @@ class SegmentCyst(pl.LightningModule):
         self.model_name = self.hparams.model.get("name", "").lower()
         self.model = object_from_dict(hparams["model"])
 
-        self.classifier = res2net50(pretrained=True, num_classes=2)
+        self.classifier = res2net50(pretrained=True)
+        self.classifier.fc = torch.nn.Linear(2048,2)# changing the number of output features to 2
         self.probs = nn.Softmax(dim=1)
 
         self.train_images = (
