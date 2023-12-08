@@ -279,7 +279,7 @@ class SegmentCyst(pl.LightningModule):
                         prob = self.probs(r)
                         top_p, top_class = prob.topk(1, dim = -1) #top_class is a (1,1) tensor
                         classifier_predictions = torch.cat((classifier_predictions,top_class.reshape((1))))
-
+                    print(classifier_predictions) #debug
                     classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
                     print(classifier_loss) # debug
                     # TODO compute accuracy
