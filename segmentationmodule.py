@@ -35,7 +35,7 @@ class SegmentCyst(pl.LightningModule):
         self.model_name = self.hparams.model.get("name", "").lower()
         self.model = object_from_dict(hparams["model"])
 
-        self.classifier = res2net50(pretrained=True)
+        self.classifier = res2net50(pretrained=True, num_classes=2)
         self.probs = nn.Softmax(dim=1)
 
         self.train_images = (
@@ -247,7 +247,6 @@ class SegmentCyst(pl.LightningModule):
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             # save predictions and use cyst classifier
-            # TODO implement classifier 
             if rate == 1:
                 for m, p, i in zip(masks, logits, features):
                     # m GT mask, i image, p segmentation predictions from model
@@ -276,12 +275,16 @@ class SegmentCyst(pl.LightningModule):
                     classifier_predictions = torch.empty((1,1000)).cuda()
                     for patch in patches:
                         r = self.classifier(patch.unsqueeze(0)) # r shape is num_classes x 1000
+                        print(r.shape)
                         classifier_predictions = torch.cat((classifier_predictions,r))
 
                     classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
-                    print(classifier_loss) # debug
-                    # TODO compute accuracy
-                    # TODO compute classifier loss
+                    #print(classifier_loss) # debug
+
+                    #TODO remove wrong 
+
+
+                    
 
 
 
