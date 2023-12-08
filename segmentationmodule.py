@@ -278,7 +278,7 @@ class SegmentCyst(pl.LightningModule):
                         r = self.classifier(patch.unsqueeze(0))
                         prob = self.probs(r)
                         top_p, top_class = prob.topk(1, dim = -1)
-                        print(type(top_class)) #debug
+                        print(top_class.shape) #debug
                         classifier_predictions = torch.cat((classifier_predictions,top_class))
 
                     classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
