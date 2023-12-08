@@ -275,10 +275,11 @@ class SegmentCyst(pl.LightningModule):
                     
                     classifier_predictions = torch.empty((1)).cuda()
                     for patch in patches:
-                        r = self.classifier(patch)
+                        r = self.classifier(patch.unsqueeze(0))
                         prob = self.probs(r)
                         top_p, top_class = prob.topk(1, dim = -1)
-                        classifier_predictions = torch.cat((classifier_predictions,r))
+                        print(type(top_class)) #debug
+                        classifier_predictions = torch.cat((classifier_predictions,top_class))
 
                     classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
                     print(classifier_loss) # debug
