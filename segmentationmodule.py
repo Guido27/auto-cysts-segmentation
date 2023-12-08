@@ -51,6 +51,8 @@ class SegmentCyst(pl.LightningModule):
             self.val_images.mkdir(exist_ok=True, parents=True)
 
         self.loss = object_from_dict(hparams["loss"])
+        self.loss_classifier = torch.nn.CrossEntropyLoss()
+
         self.max_val_iou = 0
         self.timing_result = pd.DataFrame(columns=["name", "time"])
         self.train_metrics = torch.nn.ModuleDict(
@@ -272,16 +274,17 @@ class SegmentCyst(pl.LightningModule):
                     labels = torch.cat((positive_labels, negative_labels), dim=0)
                     
                     classifier_predictions = torch.empty((1)).cuda()
-                    l = []
                     for patch in patches:
                         r = self.classifier(patch.unsqueeze(0))
                         prob = self.probs(r)
                         top_p, top_class = prob.topk(1, dim = -1)
-                        l.append(top_class) #debug, use a list now, should be a tensor later
-                        #classifier_predictions = torch.cat((classifier_predictions,r))
-                    print(l)#debug
-                    #classifier_predictions = classifier_predictions[1:]
-                    #print(classifier_predictions.shape)
+                        classifier_predictions = torch.cat((classifier_predictions,r))
+
+                    classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
+                    print(classifier_loss) # debug
+                    # TODO compute accuracy
+                    # TODO compute classifier loss
+
 
 
                     
