@@ -420,4 +420,5 @@ def refine_mask(prediction, coordinates):
     
     """
     for (x,y,w,h) in coordinates:
+        print(f'x={x}, y={y}, w={w}, h+{h}') #debug
         prediction[(y):(y+h), (x):(x+w)] = torch.zeros(((h),(w),1))
