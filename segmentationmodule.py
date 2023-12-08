@@ -241,7 +241,7 @@ class SegmentCyst(pl.LightningModule):
                 loss3 = self.loss(lateral_map_3, gts)
                 loss2 = self.loss(lateral_map_2, gts)
                 loss1 = self.loss(lateral_map_1, gts)
-                loss = loss5 + loss3 + loss2 + loss1
+                segmentation_loss = loss5 + loss3 + loss2 + loss1
 
                 logits = lateral_map_5
 
