@@ -300,7 +300,7 @@ class SegmentCyst(pl.LightningModule):
                 wrong_predicted_classes = predicted_classes[positive_patches_tensor.shape[0]:]  # get only wrong cysts class label predictions
                 wrong_coordinates = torch.tensor(wrong_coordinates).cuda()
                 to_erase_predictions = wrong_coordinates[wrong_predicted_classes == 0]  # use predictions on wrong cysts as mask label to get their coordinates
-                refine_mask(logits, to_erase_predictions)
+                refine_mask(p, to_erase_predictions)
 
 
             # self.save_predictions(logits, imgs_name)
