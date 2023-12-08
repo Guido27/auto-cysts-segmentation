@@ -317,6 +317,9 @@ def identify_wrong_predictions(gt, pred, cutoff=0):
   ----------
   gt: ground truth mask
   pred: prediction from segmentation model
+  Return
+  ------
+  A list of wrong patches coordinates in the following format: (x,y,w,h)
   """
   w_cysts = []
   gt_contours, _ = cv2.findContours(gt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -406,3 +409,15 @@ def extract_real_cysts(mask, image, p_size=64, padding_default=20):
       t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
     
     return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
+
+def refine_mask(prediction, coordinates):
+    """Refine segmentation prediction, erase segmented cysts in prediction according to coordinates passed.
+    
+    Parameters
+    ----------
+    prediction: logits from segmentation model that have to be refined
+    coordinates: tensor containing coordinates of portion of image to erase a.k.a turn black
+    
+    """
+    for (x,y,w,h) in coordinates:
+        prediction[(y):(y+h), (x):(x+w)] = torch.zeros(((h),(w),1))

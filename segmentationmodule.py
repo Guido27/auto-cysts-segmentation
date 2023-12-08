@@ -10,6 +10,7 @@ from utils import (
     identify_wrong_predictions,
     extract_wrong_predictions,
     extract_real_cysts,
+    refine_mask,
 )
 
 from PIL import Image
@@ -36,7 +37,9 @@ class SegmentCyst(pl.LightningModule):
         self.model = object_from_dict(hparams["model"])
 
         self.classifier = res2net50(pretrained=True)
-        self.classifier.fc = torch.nn.Linear(2048,2)# changing the number of output features to 2
+        self.classifier.fc = torch.nn.Linear(
+            2048, 2
+        )  # changing the number of output features to 2
         self.probs = nn.Softmax(dim=1)
 
         self.train_images = (
@@ -244,61 +247,74 @@ class SegmentCyst(pl.LightningModule):
 
             else:
                 logits = self.forward(images)
-                loss = self.loss(logits, gts)
+                segmentation_loss = self.loss(logits, gts)
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             # save predictions and use cyst classifier
-            if rate == 1:
-                for m, p, i in zip(masks, logits, features):
-                    # m GT mask, i image, p segmentation predictions from model
-                    wrong_coordinates = identify_wrong_predictions(
-                        m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    )
+            for m, p, i in zip(masks, logits, features):
+                # m GT mask, i image, p segmentation predictions from model
+                wrong_coordinates = identify_wrong_predictions(
+                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
+                    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                )
 
-                    negative_patches_tensor = extract_wrong_predictions(
-                        wrong_coordinates,
-                        i.detach().permute(1, 2, 0).cpu().numpy()
-                        # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
-                    )
+                negative_patches_tensor = extract_wrong_predictions(
+                    wrong_coordinates,
+                    i.detach().permute(1, 2, 0).cpu().numpy()
+                    # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
+                )
 
-                    positive_patches_tensor = extract_real_cysts(
-                        m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        i.detach().permute(1, 2, 0).cpu().numpy()
-                    )
+                positive_patches_tensor = extract_real_cysts(
+                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
+                    i.detach().permute(1, 2, 0).cpu().numpy(),
+                )
 
-                    positive_labels = torch.ones(positive_patches_tensor.shape[0])
-                    negative_labels = torch.zeros(negative_patches_tensor.shape[0])
-                    
-                    patches = torch.cat((positive_patches_tensor,negative_patches_tensor), dim=0).cuda()
-                    labels = torch.cat((positive_labels, negative_labels), dim=0).type(torch.LongTensor).cuda()
-                    
-                    classifier_predictions = torch.empty((1,2)).cuda()
-                    for patch in patches:
-                        r = self.classifier(patch.unsqueeze(0)) # r shape is num_classes x 2
-                        print(r.shape)
-                        classifier_predictions = torch.cat((classifier_predictions,r))
+                positive_labels = torch.ones(positive_patches_tensor.shape[0])
+                negative_labels = torch.zeros(negative_patches_tensor.shape[0])
 
-                    classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
-                    print(classifier_loss) # debug
+                patches = torch.cat(
+                    (positive_patches_tensor, negative_patches_tensor), dim=0
+                ).cuda()
+                labels = (
+                    torch.cat((positive_labels, negative_labels), dim=0)
+                    .type(torch.LongTensor)
+                    .cuda()
+                )
 
-                    #TODO remove wrong 
+                classifier_predictions = torch.empty((1, 2)).cuda()
+                for patch in patches:
+                    r = self.classifier(
+                        patch.unsqueeze(0)
+                    )  # r shape is (1, 2), 2 classes
+                    classifier_predictions = torch.cat((classifier_predictions, r))
+
+                classifier_loss = self.loss_classifier(
+                    classifier_predictions[1:], labels
+                )
+
+                loss = segmentation_loss = classifier_loss
+
+                # TODO refine mask: remove wrong cysts classified as False from classifier in segmentation mask
+
+                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute predictions of patches as class labels (0 or 1)
+                wrong_predicted_classes = predicted_classes[negative_patches_tensor.shape[0]:]  # get only wrong cysts class label predictions
+                wrong_coordinates = torch.tensor(wrong_coordinates)
+                to_erase_predictions = wrong_coordinates[wrong_predicted_classes == 0]  # use predictions on wrong cysts as mask label to get their coordinates
+                refine_mask(logits, to_erase_predictions)
 
 
-                    
+            # self.save_predictions(logits, imgs_name)
+            # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
+            #    self.log_images(images, gts, logits, batch_idx, rate)
 
+            self.log(
+                {
+                    "seg_loss": segmentation_loss,
+                    "classifier_loss": classifier_loss,
+                    "train_loss": loss,
+                }
+            )
 
-
-                    
-                    #print(f'{positive_patches_tensor.shape} computed positive tensor') #debug
-                    # print(f"Wrong cysts extractions: {len(wrong_coordinates)} wrong, {negative_patches_tensor.shape} computed tensor ") #debug
-
-                # self.save_predictions(logits, imgs_name)
-
-            if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-                self.log_images(images, gts, logits, batch_idx, rate)
-
-            self.log("train_loss", loss)
             for metric_name, metric in self.train_metrics.items():
                 metric(logits, gts.int())
                 self.log(
