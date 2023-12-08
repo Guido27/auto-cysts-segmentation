@@ -280,7 +280,7 @@ class SegmentCyst(pl.LightningModule):
                         classifier_predictions = torch.cat((classifier_predictions,r))
 
                     classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
-                    #print(classifier_loss) # debug
+                    print(classifier_loss) # debug
 
                     #TODO remove wrong 
 
