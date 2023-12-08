@@ -421,4 +421,5 @@ def refine_mask(prediction, coordinates):
     """
     for (x,y,w,h) in coordinates:
         print(f'x={x}, y={y}, w={w}, h+{h}') #debug
-        prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w))
+        prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
+        #TODO prediction requiresGrad is true, replace with not in place operation i.e make a copy but is correct making copies? 
