@@ -13,6 +13,8 @@ import cv2
 import re
 from scipy.sparse import csr_matrix
 from pytorch_toolbelt.utils.torch_utils import image_to_tensor
+import matplotlib.pyplot as plt
+
 
 import numpy as np
 import torch
@@ -431,4 +433,27 @@ def refine_mask(prediction, coordinates):
         refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
     return refined_prediction
         
-        
+#TODO complete this function
+def show_predictions(gt_mask, segmented_mask, refined_mask, epoch, image_name):
+    
+    # debug
+    print(gt_mask.shape)
+    print(segmented_mask.shape)
+    print(refined_mask.shape)
+    #end debug
+    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
+
+    ax1.imshow(gt_mask*255, cmap='gray')
+    ax1.set_title('GT Mask')
+
+    ax2.imshow(segmented_mask)
+    ax2.set_title("Segmented mask")
+
+    ax3.imshow(refined_mask * 255, cmap='gray')
+    ax3.set_title("Refined with classifier") 
+
+    plt.close()
+    
+   
+
+
