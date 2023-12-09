@@ -317,7 +317,7 @@ class SegmentCyst(pl.LightningModule):
                     n,
                     Path(self.refined_results_folder)
                 )
-
+            print("1") #debug
             # self.save_predictions(logits, imgs_name)
             # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
             #    self.log_images(images, gts, logits, batch_idx, rate)
@@ -333,6 +333,8 @@ class SegmentCyst(pl.LightningModule):
                 prog_bar=True,
             )
 
+            print("2") #debug
+
             for metric_name, metric in self.train_metrics.items():
                 metric(logits, gts.int())
                 self.log(
@@ -342,9 +344,9 @@ class SegmentCyst(pl.LightningModule):
                     on_epoch=True,
                     prog_bar=True,
                 )
-
+            print("3") #debug
             self.manual_backward(loss)
-
+            print("4")#debug
             self.clip_gradients(
                 optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm"
             )
