@@ -301,7 +301,7 @@ class SegmentCyst(pl.LightningModule):
                 )
 
                 # compute general loss
-                loss = segmentation_loss + classifier_loss
+                #loss = segmentation_loss + classifier_loss
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 
@@ -326,7 +326,7 @@ class SegmentCyst(pl.LightningModule):
                 {
                     "segmentation_loss": segmentation_loss,
                     "classifier_loss": classifier_loss,
-                    "traing_loss": loss,
+                    #"traing_loss": loss,
                 }, 
                 on_step=True,
                 on_epoch=True,
