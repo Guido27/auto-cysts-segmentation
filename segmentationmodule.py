@@ -350,8 +350,9 @@ class SegmentCyst(pl.LightningModule):
             self.clip_gradients(
                 optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm"
             )
-
+            print("5") #debug
             optimizer.step()
+            print("6") #debug
             # scheduler step after each optimizer.step(), i.e. one for each batch in each resize
             # sch = self.lr_schedulers()
             # sch.step()
