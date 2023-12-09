@@ -11,7 +11,7 @@ from utils import (
     extract_wrong_predictions,
     extract_real_cysts,
     refine_mask,
-    show_predictions,
+    save_predictions,
 )
 
 from PIL import Image
@@ -81,7 +81,7 @@ class SegmentCyst(pl.LightningModule):
         )
         self.epoch_start_time = []
 
-        self.epoch_dataset_folder = ""
+        self.refined_results_folder = ""
 
         # set automatic optimization as False
         self.automatic_optimization = False
@@ -187,13 +187,10 @@ class SegmentCyst(pl.LightningModule):
                 Path(self.epoch_dataset_folder) / f"{image_name}.png"
             )
 
-    def extract_patches(self, segmentation_prediction, segmentation_GT_mask):
-        """Extract tensors of predicted cysts in segmentation prediciton from segm. model."""
-
     def on_train_epoch_start(self):
         # create dataset folder for current epoch
-        self.epoch_dataset_folder = f"epoch_datasets/epoch_{self.trainer.current_epoch}"
-        Path(self.epoch_dataset_folder).mkdir(parents=True, exist_ok=True)
+        self.refined_results_folder = f"refined_images/train_epoch_{self.trainer.current_epoch}"
+        Path(self.refined_results_folder).mkdir(parents=True, exist_ok=True)
         self.epoch_start_time.append(time())
 
     def training_step(self, batch, batch_idx):
@@ -319,12 +316,13 @@ class SegmentCyst(pl.LightningModule):
                 refined_mask = refine_mask(p, to_erase_predictions)
 
                 # TODO save images of GT, CaranetMS predicted mask and refine mask here
-                show_predictions(
-                    m.detach().cpu().numpy().astype(np.uint8),
+                save_predictions(
+                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     logits,
                     refined_mask,
                     self.trainer.current_epoch,
                     n,
+                    self.refined_results_folder
                 )
 
             # self.save_predictions(logits, imgs_name)
