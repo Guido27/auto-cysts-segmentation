@@ -252,8 +252,8 @@ class SegmentCyst(pl.LightningModule):
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             # save predictions and use cyst classifier
-            for m, p, i in zip(masks, logits, features):
-                # m GT mask, i image, p segmentation predictions from model
+            for m, p, i, n in zip(masks, logits, features, imgs_name):
+                # m GT mask, i image, p segmentation predictions from model, n name of current image
                 wrong_coordinates = identify_wrong_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
@@ -311,7 +311,7 @@ class SegmentCyst(pl.LightningModule):
                 refined_mask = refine_mask(p, to_erase_predictions)
 
                 #TODO save images of GT, CaranetMS predicted mask and refine mask here
-                show_predictions(m, logits, refined_mask)
+                show_predictions(m, logits, refined_mask, self.trainer.current_epoch, n)
 
 
             # self.save_predictions(logits, imgs_name)

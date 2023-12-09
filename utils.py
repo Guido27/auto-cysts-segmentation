@@ -429,7 +429,6 @@ def refine_mask(prediction, coordinates):
     # TODO but is it correct making copies? 
     refined_prediction = prediction.detach().clone()
     for (x,y,w,h) in coordinates:
-        print(f'x={x}, y={y}, w={w}, h+{h}') #debug
         refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
     return refined_prediction
         
