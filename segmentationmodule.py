@@ -199,7 +199,7 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"]
 
         # manual steps in order to perform multi-scale training
-        size_rates =[1.25] #[0.75, 1.25, 1]
+        size_rates =[0.75] #[0.75, 1.25, 1]
         for rate in size_rates:
             print(rate) #debug
             optimizer = self.optimizers()
@@ -302,7 +302,7 @@ class SegmentCyst(pl.LightningModule):
                 )
 
                 # compute general loss
-                #loss = segmentation_loss + classifier_loss
+                loss = segmentation_loss + classifier_loss
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 
@@ -327,7 +327,7 @@ class SegmentCyst(pl.LightningModule):
                 {
                     "segmentation_loss": segmentation_loss,
                     "classifier_loss": classifier_loss,
-                    #"traing_loss": loss,
+                    "traing_loss": loss,
                 }, 
                 on_step=True,
                 on_epoch=True,
@@ -346,7 +346,7 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,
                 )
             print("3") #debug
-            self.manual_backward(segmentation_loss)
+            self.manual_backward(loss)
             print("4")#debug
             self.clip_gradients(
                 optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm"
