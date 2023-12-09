@@ -269,37 +269,44 @@ class SegmentCyst(pl.LightningModule):
                     i.detach().permute(1, 2, 0).cpu().numpy(),
                 )
 
+                # create labels for positive and negative patches
                 positive_labels = torch.ones(positive_patches_tensor.shape[0])
                 negative_labels = torch.zeros(negative_patches_tensor.shape[0])
 
+                #concatenate patches and labels in single tensors
                 patches = torch.cat(
                     (positive_patches_tensor, negative_patches_tensor), dim=0
                 ).cuda()
                 labels = (
                     torch.cat((positive_labels, negative_labels), dim=0)
-                    .type(torch.LongTensor)
+                    .type(torch.LongTensor) # LongTensor is required for BCE loss with labels
                     .cuda()
                 )
 
+                #compute predictions over patches from classifier
                 classifier_predictions = torch.empty((1, 2)).cuda()
                 for patch in patches:
                     r = self.classifier(
                         patch.unsqueeze(0)
                     )  # r shape is (1, 2), 2 classes
-                    classifier_predictions = torch.cat((classifier_predictions, r))
+                    classifier_predictions = torch.cat((classifier_predictions, r)) 
+                    # classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
+                    # each column represent a class and the value inside is the score (probability) computed for that specific class,
+                    # contains logits basically
 
+                #compute classifier loss
                 classifier_loss = self.loss_classifier(
                     classifier_predictions[1:], labels
                 )
 
+                # compute general loss
                 loss = segmentation_loss + classifier_loss
 
-                # TODO refine mask: remove wrong cysts classified as False from classifier in segmentation mask
-
-                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute predictions of patches as class labels (0 or 1)
-                wrong_predicted_classes = predicted_classes[positive_patches_tensor.shape[0]:]  # get only wrong cysts class label predictions
+                #refine segmentation mask: remove wrong cysts classified as False from classifier in segmentation mask
+                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                wrong_predicted_classes = predicted_classes[positive_patches_tensor.shape[0]:] # get only wrong cysts class label predictions
                 wrong_coordinates = torch.tensor(wrong_coordinates).cuda()
-                to_erase_predictions = wrong_coordinates[wrong_predicted_classes == 0]  # use predictions on wrong cysts as mask label to get their coordinates
+                to_erase_predictions = wrong_coordinates[wrong_predicted_classes == 0] # use predictions on wrong cysts as mask label to get coordinates of ones classified as False/0
                 refine_mask(p, to_erase_predictions)
 
 

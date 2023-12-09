@@ -416,7 +416,7 @@ def refine_mask(prediction, coordinates):
     Parameters
     ----------
     prediction: logits from segmentation model that have to be refined
-    coordinates: tensor containing coordinates of portion of image to erase a.k.a turn black
+    coordinates: tensor containing coordinates of portion of image to erase (turn it black)
     
     """
     for (x,y,w,h) in coordinates:
