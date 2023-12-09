@@ -320,9 +320,8 @@ class SegmentCyst(pl.LightningModule):
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze.cpu().numpy.astype(np.uint8),
                     refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
-                    self.trainer.current_epoch,
                     n,
-                    self.refined_results_folder
+                    Path(self.refined_results_folder)
                 )
 
             # self.save_predictions(logits, imgs_name)

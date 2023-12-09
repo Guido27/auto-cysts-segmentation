@@ -433,7 +433,7 @@ def refine_mask(prediction, coordinates):
     return refined_prediction
         
 #TODO complete this function
-def save_predictions(gt_mask, segmented_mask, refined_mask, epoch, image_name, path):
+def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     
     # debug
     print(gt_mask.shape)
@@ -451,8 +451,9 @@ def save_predictions(gt_mask, segmented_mask, refined_mask, epoch, image_name, p
     ax3.imshow(refined_mask * 255, cmap='gray')
     ax3.set_title("Refined with classifier") 
 
-    plt.savefig()
+    plt.savefig(path / f'{image_name}.png')
     plt.close()
+
     
    
 
