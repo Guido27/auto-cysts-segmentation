@@ -249,7 +249,7 @@ class SegmentCyst(pl.LightningModule):
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
             # save predictions and use cyst classifier
-            for m, p, i, n in zip(masks, logits, features, imgs_name):
+            for m, p, i, n in zip(gts, logits, features, imgs_name):
                 # m GT mask, i image, p segmentation predictions from model, n name of current image
                 wrong_coordinates = identify_wrong_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
@@ -262,8 +262,9 @@ class SegmentCyst(pl.LightningModule):
                     # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
                 )
 
-                positive_patches_tensor = extract_real_cysts(
+                positive_patches_tensor, detected_coordinates = extract_real_cysts(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
+                    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                     i.detach().permute(1, 2, 0).cpu().numpy(),
                 )
 
@@ -302,20 +303,14 @@ class SegmentCyst(pl.LightningModule):
                 # compute general loss
                 loss = segmentation_loss + classifier_loss
 
-                # refine segmentation mask: remove wrong cysts classified as False from classifier in segmentation mask
-                predicted_classes = torch.max(classifier_predictions[1:], 1)[
-                    1
-                ]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-                wrong_predicted_classes = predicted_classes[
-                    positive_patches_tensor.shape[0] :
-                ]  # get only wrong cysts class label predictions
-                wrong_coordinates = torch.tensor(wrong_coordinates).cuda()
-                to_erase_predictions = wrong_coordinates[
-                    wrong_predicted_classes == 0
-                ]  # use predictions on wrong cysts as mask label to get coordinates of ones classified as False/0
+                # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
+                
+                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
+                to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
+                
                 refined_mask = refine_mask(p, to_erase_predictions)
 
-                # TODO save images of GT, CaranetMS predicted mask and refine mask here
                 save_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),

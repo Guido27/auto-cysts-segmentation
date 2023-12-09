@@ -372,45 +372,54 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     
     return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
 
-
-def extract_real_cysts(mask, image, p_size=64, padding_default=20):
-    """Extract from RGB image true cysts using the ground truth mask a.k.a positive patches for classifier. Each patch will be resized to 64x64 dimension.
+# TODO modify: extract detected cysts, not cysts from groundtruth
+def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
+    """Extract from RGB image detected cysts. 
+    In order to define if a segmented element is a true cyst the ground truth mask is used: if a segmented object in the prediction mask has even just a single
+    pixel in common with a cyst segmented in the groud truth mask is extracted as positive patch for the classifier.
+    Each patch will be resized to 64x64 dimension.
     
     Parameters
     ----------
-    mask: Ground truth segmentation mask associated with RGB image, passed one is a float tensor converted to numpy array with np.uint8 dtype.
+    gt_mask: groud truth segmentation mask
+    pred_mask: segmentation mask predicted from segmentation model, passed one is a float tensor converted to numpy array with np.uint8 dtype.
     image: Original RGB image from which positive patches have to be extracted, expected to have shape (H*W*C), C should be 3 because of RGB images
     
     Return
     -------
-    t: Tensor oh shape (N*C*p_size*p_size) where N is the number of positive patches extracted"""
+    t: Tensor oh shape (N*C*p_size*p_size) where N is the number of positive patches extracted
+    l: list of coordinates of extracted positive patches"""
     
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
-
-    #convert mask to a greyscale and threshold it to extract contours of cysts
-    #imgray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(mask*255, 127, 255, 0) #mask * 255 because threshold expects to have integer values between 0 and 255
-    # find contours in thresholded image
+    l = []
+    #threshold predicted mask in order to extract contours of cysts
+    ret, thresh = cv2.threshold(pred_mask*255, 127, 255, 0) #mask * 255 because threshold expects to have integer values between 0 and 255
+    # find contours of segmented areas in thresholded image
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
-    #extract cysts from original image using contours
+    #iterate over segmented areas contours to find ones with cysts in it
     for k in range(len(contours)):
+    
       cnt = contours[k]
       x,y,w,h = cv2.boundingRect(cnt)
+      
+      # if a segmented area has an intersection with a segmented cyst in gt mask extract it (with padding) as positive patch
+      if gt_mask[(y):(y+h), (x):(x+w)].any():  
+        # add coordinates to positive coordinates list
+        l.append((x,y,w,h))
+        # avoid that cysts with no space for padding cause errors: get cyst with lower padding
+        p = padding_default
+        while True:
+          crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+          if crop.shape[0] != 0 and crop.shape[1] != 0:
+            break
+          else:
+             p = p-1
 
-      # avoid that cysts with no space for padding cause errors: get cyst with lower padding
-      p = padding_default
-      while True:
-        crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
-        if crop.shape[0] != 0 and crop.shape[1] != 0:
-          break
-        else:
-           p = p-1
-
-      resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
-      t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
+        resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+        t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
     
-    return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
+    return t[1:, :, :, :],l #exclude the first empty tensor declared with torch.empty in t
 
 def refine_mask(prediction, coordinates):
     """Refine segmentation prediction, erase segmented cysts in prediction according to coordinates passed.
