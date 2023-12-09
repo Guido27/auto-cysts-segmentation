@@ -418,8 +418,17 @@ def refine_mask(prediction, coordinates):
     prediction: logits from segmentation model that have to be refined
     coordinates: tensor containing coordinates of portion of image to erase (turn it black)
     
+    Return
+    ------
+    refined prediction: tensor, copy of the original one, with deleted segmented cysts according to coordinates passed
     """
+
+    # prediction -> requiresGrad is True, in place operation have to be replaced with not-in-place operation i.e make a copy and edit it
+    # TODO but is it correct making copies? 
+    refined_prediction = prediction.detach().clone()
     for (x,y,w,h) in coordinates:
         print(f'x={x}, y={y}, w={w}, h+{h}') #debug
-        prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
-        #TODO prediction requiresGrad is true, replace with not in place operation i.e make a copy but is correct making copies? 
+        refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
+    return refined_prediction
+        
+        
