@@ -345,7 +345,7 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,
                 )
             print("3") #debug
-            self.manual_backward(loss)
+            self.manual_backward(segmentation_loss)
             print("4")#debug
             self.clip_gradients(
                 optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm"
