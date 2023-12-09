@@ -318,8 +318,8 @@ class SegmentCyst(pl.LightningModule):
                 # TODO save images of GT, CaranetMS predicted mask and refine mask here
                 save_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                    logits,
-                    refined_mask,
+                    (p > 0.5).detach().squeeze.cpu().numpy.astype(np.uint8),
+                    refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
                     self.trainer.current_epoch,
                     n,
                     self.refined_results_folder
