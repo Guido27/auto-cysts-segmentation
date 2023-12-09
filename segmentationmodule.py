@@ -305,18 +305,18 @@ class SegmentCyst(pl.LightningModule):
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 
-                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-                coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
-                to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
-                refined_mask = refine_mask(p, to_erase_predictions)
-
-                save_predictions(
-                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
-                    n,
-                    Path(self.refined_results_folder)
-                )
+                #predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                #coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
+                #to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
+                #refined_mask = refine_mask(p, to_erase_predictions)
+#
+                #save_predictions(
+                #    m.detach().squeeze().cpu().numpy().astype(np.uint8),
+                #    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                #    refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
+                #    n,
+                #    Path(self.refined_results_folder)
+                #)
             print("1") #debug
             # self.save_predictions(logits, imgs_name)
             # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
