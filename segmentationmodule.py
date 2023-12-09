@@ -328,7 +328,7 @@ class SegmentCyst(pl.LightningModule):
             # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
             #    self.log_images(images, gts, logits, batch_idx, rate)
 
-            self.log(
+            self.log_dict(
                 {
                     "segmentation_loss": segmentation_loss,
                     "classifier_loss": classifier_loss,

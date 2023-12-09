@@ -445,7 +445,7 @@ def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     ax1.imshow(gt_mask*255, cmap='gray')
     ax1.set_title('GT Mask')
 
-    ax2.imshow(segmented_mask)
+    ax2.imshow(segmented_mask, cmap= 'gray')
     ax2.set_title("Segmented mask")
 
     ax3.imshow(refined_mask * 255, cmap='gray')
