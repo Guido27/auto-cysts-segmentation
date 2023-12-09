@@ -405,6 +405,7 @@ def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20)
       
       # if a segmented area has an intersection with a segmented cyst in gt mask extract it (with padding) as positive patch
       if gt_mask[(y):(y+h), (x):(x+w)].any():  
+        print('detected!') #debug
         # add coordinates to positive coordinates list
         l.append((x,y,w,h))
         # avoid that cysts with no space for padding cause errors: get cyst with lower padding
