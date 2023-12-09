@@ -308,7 +308,8 @@ class SegmentCyst(pl.LightningModule):
                 predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
                 coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
-                print(predicted_classes) # debug
+                print(predicted_classes.shape) # debug
+                print(coordinates.shape)# debug
                 refined_mask = refine_mask(p, to_erase_predictions)
 
                 save_predictions(
