@@ -363,7 +363,7 @@ class SegmentCyst(pl.LightningModule):
         # sch = self.lr_schedulers()
         # sch.step()
 
-        return {"loss": loss}
+        return {"loss": segmentation_loss}
 
     def get_lr(self):
         optimizer = self.optimizers()
