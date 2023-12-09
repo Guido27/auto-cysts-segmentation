@@ -444,11 +444,6 @@ def refine_mask(prediction, coordinates):
 #TODO complete this function
 def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     
-    # debug
-    print(gt_mask.shape)
-    print(segmented_mask.shape)
-    print(refined_mask.shape)
-    #end debug
     f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
 
     ax1.imshow(gt_mask*255, cmap='gray')
