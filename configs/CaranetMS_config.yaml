@@ -17,10 +17,10 @@ loss:
   type: losses.BCEWithLogitsLoss 
 
 scheduler:
-  #type: torch.optim.lr_scheduler.LambdaLR
-  type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
-  T_0: 10
-  T_mult: 2
+  type: torch.optim.lr_scheduler.LambdaLR
+  #type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+  #T_0: 10
+  #T_mult: 2
   
 checkpoint_callback:
   dirpath: "./cyst_checkpoints/Nature_v4"
