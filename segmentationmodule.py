@@ -312,12 +312,14 @@ class SegmentCyst(pl.LightningModule):
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
+
+                print(refined_mask.dtype) #debug
                 
                 if rate == 0.75:
                     save_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
+                        (refined_mask>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                         f"batch_{batch_idx:03}_{output_idx}",
                         Path(self.refined_results_folder)
                     )
@@ -336,6 +338,7 @@ class SegmentCyst(pl.LightningModule):
                 prog_bar=True,
             )
 
+            # TODO passare la refined mask (logits) oppure (refined_mask > 0.5) ???
             for metric_name, metric in self.train_metrics.items():
                 metric(batch_output, gts.int())
                 self.log(
