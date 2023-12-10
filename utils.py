@@ -437,7 +437,6 @@ def refine_mask(prediction, coordinates):
     # prediction -> requiresGrad is True, in place operation have to be replaced with not-in-place operation i.e make a copy and edit it
     # TODO but is it correct making copies? 
     refined_prediction = prediction.detach().clone()
-    print(refined_prediction.shape)#debug
     for (x,y,w,h) in coordinates:
         refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
     return refined_prediction
@@ -450,10 +449,10 @@ def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     ax1.imshow(gt_mask*255, cmap='gray')
     ax1.set_title('GT Mask')
 
-    ax2.imshow(segmented_mask, cmap= 'gray')
+    ax2.imshow(segmented_mask*255, cmap= 'gray')
     ax2.set_title("Segmented mask")
 
-    ax3.imshow(refined_mask, cmap='gray')
+    ax3.imshow(refined_mask*255, cmap='gray')
     ax3.set_title("Refined with classifier") 
 
     plt.savefig(path / f'{image_name}.png')
