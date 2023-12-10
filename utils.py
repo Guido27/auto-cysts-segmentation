@@ -337,7 +337,7 @@ def identify_wrong_predictions(gt, pred, cutoff=0):
         x,y,w,h = cv2.boundingRect(c)
         w_tuple = (x,y,w,h)
         w_cysts.append(w_tuple)
-  return w_cysts if len(w_cysts) !=0 else None
+  return w_cysts 
 
 
 
