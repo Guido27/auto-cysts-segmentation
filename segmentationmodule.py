@@ -397,7 +397,7 @@ class SegmentCyst(pl.LightningModule):
 
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
-        batch_output = torch.empty(features.shape).cuda()
+        batch_output = torch.empty(masks.shape).cuda()
         output_idx = 0
 
         # save predictions and use cyst classifier
