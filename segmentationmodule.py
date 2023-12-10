@@ -249,7 +249,7 @@ class SegmentCyst(pl.LightningModule):
                 segmentation_loss = self.loss(logits, gts)
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
-            batch_output = torch.empty(gts.shape).cuda()
+            batch_output = torch.empty(gts.shape).cuda() # refined masks computed in current batch will be saved here to compute metrics
             output_idx = 0
 
             # use cyst classifier
@@ -400,6 +400,9 @@ class SegmentCyst(pl.LightningModule):
 
         logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
+        batch_output = torch.empty(features.shape).cuda()
+        output_idx = 0
+
         # save predictions and use cyst classifier
         for m, p, i, n in zip(masks, logits, features, imgs_name):
             # m GT mask, i image, p segmentation predictions from model, n name of current image
@@ -454,6 +457,7 @@ class SegmentCyst(pl.LightningModule):
             to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
             refined_mask = refine_mask(p, to_erase_predictions)
 
+            batch_output[output_idx] = refined_mask
             #don't save predictions in val step for the moment
 
         self.log_dict({"segmentation_loss": segmentation_loss,
@@ -461,7 +465,7 @@ class SegmentCyst(pl.LightningModule):
                     "traing_loss": loss,})
        
         for metric_name, metric in self.val_metrics.items():
-            metric(refined_mask, masks.int()) # compute metrics on refine mask
+            metric(batch_output, masks.int()) # compute metrics on refined masks
             self.log(f"val_{metric_name}", metric, on_step=True, on_epoch=True)
     
     def get_lr(self):
