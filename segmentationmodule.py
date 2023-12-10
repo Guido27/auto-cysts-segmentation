@@ -318,7 +318,7 @@ class SegmentCyst(pl.LightningModule):
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                         refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        n,
+                        f"{batch}_{batch_idx}",
                         Path(self.refined_results_folder)
                     )
 
