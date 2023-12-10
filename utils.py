@@ -452,7 +452,7 @@ def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     ax2.imshow(segmented_mask, cmap= 'gray')
     ax2.set_title("Segmented mask")
 
-    ax3.imshow(refined_mask * 255, cmap='gray')
+    ax3.imshow(refined_mask, cmap='gray')
     ax3.set_title("Refined with classifier") 
 
     plt.savefig(path / f'{image_name}.png')
