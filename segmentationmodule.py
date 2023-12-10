@@ -41,7 +41,6 @@ class SegmentCyst(pl.LightningModule):
         self.classifier.fc = torch.nn.Linear(
             2048, 2
         )  # changing the number of output features to 2
-        self.probs = nn.Softmax(dim=1)
 
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
