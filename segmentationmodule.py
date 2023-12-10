@@ -457,8 +457,8 @@ class SegmentCyst(pl.LightningModule):
             output_idx = output_idx + 1
             #don't save predictions in val step for the moment
 
-        self.log_dict({"segmentation_loss": segmentation_loss,
-                    "classifier_loss": classifier_loss,
+        self.log_dict({"val_segmentation_loss": segmentation_loss,
+                    "val_classifier_loss": classifier_loss,
                     "val_loss": loss,})
        
         for metric_name, metric in self.val_metrics.items():
