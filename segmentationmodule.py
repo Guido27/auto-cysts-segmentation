@@ -198,7 +198,7 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"]
 
         # manual steps in order to perform multi-scale training
-        size_rates =[1] #[0.75, 1.25, 1]
+        size_rates =[0.75] #[0.75, 1.25, 1]
         for rate in size_rates:
     
             optimizer = self.optimizers()
@@ -318,7 +318,7 @@ class SegmentCyst(pl.LightningModule):
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
 
-                if rate == 1:
+                if rate == 0.75:
                     save_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
