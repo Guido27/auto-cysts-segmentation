@@ -249,6 +249,9 @@ class SegmentCyst(pl.LightningModule):
                 segmentation_loss = self.loss(logits, gts)
             # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
 
+            batch_output = torch.empty(gts.shape).cuda()
+            output_idx = 0
+
             # use cyst classifier
             for m, p, i, n in zip(gts, logits, features, imgs_name):
                 # m GT mask, i image, p segmentation predictions from model, n name of current image
@@ -309,6 +312,7 @@ class SegmentCyst(pl.LightningModule):
                 coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
+                batch_output[output_idx] = refined_mask
 
                 if rate == 1:
                     save_predictions(
@@ -338,7 +342,7 @@ class SegmentCyst(pl.LightningModule):
             print("2") #debug
 
             for metric_name, metric in self.train_metrics.items():
-                metric(refined_mask, gts.int())
+                metric(batch_output, gts.int())
                 self.log(
                     f"train_{metric_name}",
                     metric,
