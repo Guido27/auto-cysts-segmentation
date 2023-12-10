@@ -251,7 +251,7 @@ class SegmentCyst(pl.LightningModule):
             batch_output = torch.empty(gts.shape).cuda() # refined masks computed in current batch will be saved here to compute metrics
             output_idx = 0
 
-            # use cyst classifier
+            # use cyst classifier on each batch image
             for m, p, i, n in zip(gts, logits, features, imgs_name):
                 # m GT mask, i image, p segmentation predictions from model, n name of current image
                 wrong_coordinates = identify_wrong_predictions(
@@ -304,7 +304,7 @@ class SegmentCyst(pl.LightningModule):
                 )
 
                 # compute training loss
-                loss = segmentation_loss + classifier_loss
+                loss = segmentation_loss + classifier_loss #TODO is correct to add classifier loss here? Would be more correct to use batch_size = 1?
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
@@ -312,20 +312,18 @@ class SegmentCyst(pl.LightningModule):
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
-
+                
                 if rate == 0.75:
                     save_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                         refined_mask.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        f"{batch}_{batch_idx}",
+                        f"batch_{batch_idx}_{output_idx}",
                         Path(self.refined_results_folder)
                     )
 
-       
-            # self.save_predictions(logits, imgs_name)
-            # if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
-            #    self.log_images(images, gts, logits, batch_idx, rate)
+                output_idx = output_idx + 1
+
 
             self.log_dict(
                 {
@@ -456,6 +454,7 @@ class SegmentCyst(pl.LightningModule):
             refined_mask = refine_mask(p, to_erase_predictions)
 
             batch_output[output_idx] = refined_mask
+            output_idx = output_idx + 1
             #don't save predictions in val step for the moment
 
         self.log_dict({"segmentation_loss": segmentation_loss,
