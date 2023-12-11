@@ -322,7 +322,7 @@ class SegmentCyst(pl.LightningModule):
                 )
 
                 # compute training loss
-                loss = segmentation_loss + classifier_loss #TODO is correct to add classifier loss here? Would be more correct to use batch_size = 1?
+                loss = segmentation_loss + classifier_loss #TODO capire se la loss deve essere calcolata cosi, probabilmente no
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
@@ -354,7 +354,7 @@ class SegmentCyst(pl.LightningModule):
                 prog_bar=True,
             )
 
-            # passare la refined mask (logits) oppure (refined_mask > 0.5) -> passare logits, il thresholding lo fa gia la metric da sola
+            # passare la refined mask (logits) oppure (refined_mask > 0.5)? -> passare logits, il thresholding lo fa gia la metric da sola
             for metric_name, metric in self.train_metrics.items():
                 metric(batch_output, gts.int())
                 self.log(
