@@ -194,6 +194,22 @@ class SegmentCyst(pl.LightningModule):
         Path(self.refined_results_folder).mkdir(parents=True, exist_ok=True)
         self.epoch_start_time.append(time())
 
+    def get_lr(self):
+        optimizer = self.optimizers()
+        for param_group in optimizer.param_groups:
+            return param_group["lr"]
+        
+    def on_train_epoch_end(self):
+        self.log("epoch", float(self.trainer.current_epoch))
+        #  scheduler.step() after each train epoch
+        sch = self.lr_schedulers()
+        sch.step()
+        self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
+
+    def on_test_epoch_start(self):
+        self.refined_results_folder_test = f"refined_images/test_results"
+        Path(self.refined_results_folder_test).mkdir(parents=True, exist_ok=True)
+
     def training_step(self, batch, batch_idx):
         imgs_name = batch["image_id"]
         features = batch["features"]
@@ -338,7 +354,7 @@ class SegmentCyst(pl.LightningModule):
                 prog_bar=True,
             )
 
-            # TODO passare la refined mask (logits) oppure (refined_mask > 0.5) ???
+            # passare la refined mask (logits) oppure (refined_mask > 0.5) -> passare logits, il thresholding lo fa gia la metric da sola
             for metric_name, metric in self.train_metrics.items():
                 metric(batch_output, gts.int())
                 self.log(
@@ -401,26 +417,33 @@ class SegmentCyst(pl.LightningModule):
         batch_output = torch.empty(masks.shape).cuda()
         output_idx = 0
 
-        # save predictions and use cyst classifier
-        for m, p, i, n in zip(masks, logits, features, imgs_name):
-            # m GT mask, i image, p segmentation predictions from model, n name of current image
+        # extract segmented areas and run classifier on them
+        for p, i, m in zip(logits, features, masks):
+            
+            # extract wrng predictions
             wrong_coordinates = identify_wrong_predictions(
-                m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-            )
+                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
+                    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                )
+            
+            #save wrong as negative patches
             negative_patches_tensor = extract_wrong_predictions(
                 wrong_coordinates,
                 i.detach().permute(1, 2, 0).cpu().numpy()
                 # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
             )
+
+            #extract positive patches
             positive_patches_tensor, detected_coordinates = extract_real_cysts(
                 m.detach().squeeze().cpu().numpy().astype(np.uint8),
                 (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                 i.detach().permute(1, 2, 0).cpu().numpy(),
             )
+
             # create labels for positive and negative patches
             positive_labels = torch.ones(positive_patches_tensor.shape[0])
             negative_labels = torch.zeros(negative_patches_tensor.shape[0])
+
             # concatenate patches and labels in single tensors
             patches = torch.cat(
                 (positive_patches_tensor, negative_patches_tensor), dim=0
@@ -432,6 +455,7 @@ class SegmentCyst(pl.LightningModule):
                 )  # LongTensor is required for BCE loss with labels
                 .cuda()
             )
+            
             # compute predictions over patches from classifier
             classifier_predictions = torch.empty((1, 2)).cuda()
             for patch in patches:
@@ -442,12 +466,6 @@ class SegmentCyst(pl.LightningModule):
                 # classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
                 # each column represent a class and the value inside is the score (probability) computed for that specific class,
                 # contains logits basically
-            # compute classifier loss
-            classifier_loss = self.loss_classifier(
-                classifier_predictions[1:], labels
-            )
-            # compute general loss
-            loss = segmentation_loss + classifier_loss
             
             # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
             predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
@@ -458,6 +476,14 @@ class SegmentCyst(pl.LightningModule):
 
             batch_output[output_idx] = refined_mask
             output_idx = output_idx + 1
+
+            classifier_loss = self.loss_classifier(
+                classifier_predictions[1:], labels
+            )
+            
+            # compute general loss
+            loss = segmentation_loss + classifier_loss
+            
             #don't save predictions in val step for the moment
 
         self.log_dict({"val_segmentation_loss": segmentation_loss,
@@ -467,22 +493,6 @@ class SegmentCyst(pl.LightningModule):
         for metric_name, metric in self.val_metrics.items():
             metric(batch_output, masks.int()) # compute metrics on refined masks
             self.log(f"val_{metric_name}", metric, on_step=True, on_epoch=True)
-    
-    def get_lr(self):
-        optimizer = self.optimizers()
-        for param_group in optimizer.param_groups:
-            return param_group["lr"]
-        
-    def on_train_epoch_end(self):
-        self.log("epoch", float(self.trainer.current_epoch))
-        #  scheduler.step() after each train epoch
-        sch = self.lr_schedulers()
-        sch.step()
-        self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
-
-    def on_test_epoch_start(self):
-        self.refined_results_folder_test = f"refined_images/test_results"
-        Path(self.refined_results_folder_test).mkdir(parents=True, exist_ok=True)
 
     def test_step(self, batch, batch_id):
         features = batch["features"]
