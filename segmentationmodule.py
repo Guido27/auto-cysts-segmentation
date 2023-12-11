@@ -392,7 +392,7 @@ class SegmentCyst(pl.LightningModule):
                 }
 
     def validation_step(self, batch, batch_id):
-        features = batch["features"].float()
+        features = batch["features"]
         masks = batch["masks"]
         imgs_name = batch["image_id"]
 
@@ -427,6 +427,7 @@ class SegmentCyst(pl.LightningModule):
         # extract segmented areas and run classifier on them
         for p, i, m in zip(logits, features, masks):
             
+            print(p.shape, i.shape,m.shape)
             # extract wrng predictions
             wrong_coordinates = identify_wrong_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
