@@ -490,12 +490,13 @@ class SegmentCyst(pl.LightningModule):
 
             # compute general loss
             loss = segmentation_loss + classifier_loss
+            print(f'loss:{loss}, segmentation_loss: {segmentation_loss}, classifier_loss: {classifier_loss}') #debug
             
             #don't save predictions in val step for the moment
 
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
-                    "val_loss": loss,}, 
+                    "val_loss": loss}, 
                     on_step=True,
                     on_epoch=True,
                     prog_bar=True,)
