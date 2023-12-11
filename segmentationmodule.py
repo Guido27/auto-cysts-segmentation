@@ -330,6 +330,7 @@ class SegmentCyst(pl.LightningModule):
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
+                print(predicted_classes) #debug
                 print(f'- batch_{batch_idx:03}_{output_idx}\nPatches classified total: {predicted_classes.shape[0]}\nclassified as not cysts:{to_erase_predictions.shape[0]}') #debug
                 if rate == 0.75:
                     save_predictions(

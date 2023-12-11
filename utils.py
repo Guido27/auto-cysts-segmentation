@@ -32,8 +32,7 @@ def date_to_exp(date):
     return date_exps[date]
 
 
-# TODO: togliere
-# all_treats = {'ctrl', 'treat_1', 'treat_2', 'treat_3', 'treat_4', 'treat_5', 'treat_6', 'treat_7', 'treat_8', 'treat_9', 'treat_10'}
+
 all_treats = {'ctrl', 't3', 'triac', 't4', 'tetrac', 'resv', 'dbd', 'lm609', 'uo', 'dbd+t4', 'uo+t4', 'lm609+t4', 'lm609+10ug.ml', 'lm609+2.5ug.ml'}
 
 def simplify_names(filename):
@@ -372,7 +371,6 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
     
     return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
 
-# TODO modify: extract detected cysts, not cysts from groundtruth
 def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
     """Extract from RGB image detected cysts. 
     In order to define if a segmented element is a true cyst the ground truth mask is used: if a segmented object in the prediction mask has even just a single
@@ -461,7 +459,7 @@ def extract_segmented_cysts_test_time(prediction, image, p_size = 64, padding_de
              p = p-1
         resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
         t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
-        
+
     return t[1:, :, :, :],l #exclude the first empty tensor declared with torch.empty in t
 
 def refine_mask(prediction, coordinates):
@@ -484,7 +482,6 @@ def refine_mask(prediction, coordinates):
         refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
     return refined_prediction
         
-#TODO complete this function
 def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     
     f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
