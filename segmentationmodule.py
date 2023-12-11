@@ -516,7 +516,9 @@ class SegmentCyst(pl.LightningModule):
             patches, coordinates = extract_segmented_cysts_test_time(
                 (p>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                 i.detach().permute(1, 2, 0).cpu().numpy(),)
-            
+           
+            patches.cuda() #move patches to gpu
+
             # compute predictions over patches from classifier
             classifier_predictions = torch.empty((1, 2)).cuda()
             for patch in patches:
