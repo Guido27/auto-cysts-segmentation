@@ -21,7 +21,7 @@ class SegmentationDataset(Dataset):
         transform: None,
         noG=False,
     ):
-        self.samples = samples[:10] #debug: reduce epoch lenght for testing #TODO remove after debug
+        self.samples = samples[:5] #debug: reduce epoch lenght for testing #TODO remove after debug
         self.transform = transform
         self.length = len(self.samples)
         self.noG = noG
