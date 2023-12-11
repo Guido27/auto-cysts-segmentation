@@ -314,10 +314,12 @@ def split_dataset(hparams):
 
 def identify_wrong_predictions(gt, pred, cutoff=0):
   """Return a list of wrong patches coordinates segmented in pred
+  
   Parameters
   ----------
   gt: ground truth mask
   pred: prediction from segmentation model
+
   Return
   ------
   A list of wrong patches coordinates in the following format: (x,y,w,h)
