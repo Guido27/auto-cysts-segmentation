@@ -316,7 +316,7 @@ class SegmentCyst(pl.LightningModule):
                     # INFO: classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
                     #       each column represent a class and the value inside is the score (probability) computed for that specific class,
                     #       contains logits basically
-                classifier_predictions.requires_grad = True
+            
                 # compute classifier loss
                 classifier_loss = self.loss_classifier(
                     classifier_predictions[1:], labels
