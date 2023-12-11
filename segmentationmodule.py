@@ -433,7 +433,7 @@ class SegmentCyst(pl.LightningModule):
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                 )
             
-            print(wrong_coordinates) #debug
+            print(len(wrong_coordinates)) #debug
             
             #save wrong as negative patches
             negative_patches_tensor = extract_wrong_predictions(
