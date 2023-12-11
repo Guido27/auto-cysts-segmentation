@@ -495,7 +495,10 @@ class SegmentCyst(pl.LightningModule):
 
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
-                    "val_loss": loss,})
+                    "val_loss": loss,}, 
+                    on_step=True,
+                    on_epoch=True,
+                    prog_bar=True,)
        
         for metric_name, metric in self.val_metrics.items():
             metric(batch_output, masks.int()) # compute metrics on refined masks
