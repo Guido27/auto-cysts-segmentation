@@ -426,16 +426,14 @@ class SegmentCyst(pl.LightningModule):
 
         # extract segmented areas and run classifier on them
         for p, i, m in zip(logits, features, masks):
-   
+            print(p.any()) #debug
             # extract wrng predictions
             wrong_coordinates = identify_wrong_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    debug=True
+                    debug=False
                 )
-            
-            print(len(wrong_coordinates)) #debug
-            
+    
             #save wrong as negative patches
             negative_patches_tensor = extract_wrong_predictions(
                 wrong_coordinates,
