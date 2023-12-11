@@ -448,7 +448,7 @@ class SegmentCyst(pl.LightningModule):
             )
 
             # if no segmented areas in segmentation model predicion -> avoid classifier in order to don't create nan classifier loss which breaks training
-            if not (len(detected_coordinates == 0) and len(wrong_coordinates) == 0):
+            if not (len(detected_coordinates) == 0 and len(wrong_coordinates) == 0):
 
                 # create labels for positive and negative patches
                 positive_labels = torch.ones(positive_patches_tensor.shape[0])
@@ -499,7 +499,7 @@ class SegmentCyst(pl.LightningModule):
                 classifier_loss = 0
 
         # don't save predictions in val set for the moment 
-        
+
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
                     "val_loss": loss}, 
