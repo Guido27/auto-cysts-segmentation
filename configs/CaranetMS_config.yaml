@@ -42,16 +42,16 @@ train_parameters:
   batch_size: 2
 
 val_parameters:
-  batch_size: 4
+  batch_size: 2
 
 test_parameters:
-  batch_size: 4
+  batch_size: 2
   threshold: .5
 
 optimizer:
   type: torch.optim.Adam
   # type: adamp.AdamP
-  lr: 0.0001
+  lr: 0.00001
 
 
 train_aug:
