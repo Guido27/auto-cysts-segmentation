@@ -534,7 +534,7 @@ class SegmentCyst(pl.LightningModule):
                 (p>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                 i.detach().permute(1, 2, 0).cpu().numpy(),)
            
-            patches.cuda() #move patches to gpu
+            patches = patches.cuda() #move patches to gpu
 
             # compute predictions over patches from classifier
             classifier_predictions = torch.empty((1, 2)).cuda()
