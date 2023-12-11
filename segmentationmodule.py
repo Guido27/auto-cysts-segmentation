@@ -304,6 +304,7 @@ class SegmentCyst(pl.LightningModule):
                     )  # LongTensor is required for BCE loss with labels
                     .cuda()
                 )
+                labels.requires_grad = False
 
                 # compute classifier predictions over patches extracted from segmentation model predicted mask
                 classifier_predictions = torch.empty((1, 2)).cuda()
@@ -321,7 +322,7 @@ class SegmentCyst(pl.LightningModule):
                     classifier_predictions[1:], labels
                 )
 
-                print(classifier_loss) #debug
+         
 
                 # compute training loss
                 loss = segmentation_loss + classifier_loss #TODO capire se la loss deve essere calcolata cosi, probabilmente no
