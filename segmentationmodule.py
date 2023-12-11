@@ -426,12 +426,11 @@ class SegmentCyst(pl.LightningModule):
 
         # extract segmented areas and run classifier on them
         for p, i, m in zip(logits, features, masks):
-            print(p.max()) #debug
+            
             # extract wrng predictions
             wrong_coordinates = identify_wrong_predictions(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    debug=False
                 )
     
             #save wrong as negative patches
@@ -448,58 +447,59 @@ class SegmentCyst(pl.LightningModule):
                 i.detach().permute(1, 2, 0).cpu().numpy(),
             )
 
-            # create labels for positive and negative patches
-            positive_labels = torch.ones(positive_patches_tensor.shape[0])
-            negative_labels = torch.zeros(negative_patches_tensor.shape[0])
+            # if no segmented areas in segmentation model predicion -> avoid classifier in order to don't create nan classifier loss which breaks training
+            if not (len(detected_coordinates == 0) and len(wrong_coordinates) == 0):
 
-            # concatenate patches and labels in single tensors
-            patches = torch.cat(
-                (positive_patches_tensor, negative_patches_tensor), dim=0
-            ).cuda()
-            labels = (
-                torch.cat((positive_labels, negative_labels), dim=0)
-                .type(
-                    torch.LongTensor
-                )  # LongTensor is required for BCE loss with labels
-                .cuda()
-            )
-            
-            # compute predictions over patches from classifier
-            classifier_predictions = torch.empty((1, 2)).cuda()
-            for patch in patches:
-                r = self.classifier(
-                    patch.unsqueeze(0)
-                )  # r shape is (1, 2), 2 classes
-                classifier_predictions = torch.cat((classifier_predictions, r))
-                # classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
-                # each column represent a class and the value inside is the score (probability) computed for that specific class,
-                # contains logits basically
-            
-            # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
-            predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-            coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
-            
-            to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
-            refined_mask = refine_mask(p, to_erase_predictions)
+                # create labels for positive and negative patches
+                positive_labels = torch.ones(positive_patches_tensor.shape[0])
+                negative_labels = torch.zeros(negative_patches_tensor.shape[0])
 
-            batch_output[output_idx] = refined_mask
-            output_idx = output_idx + 1
+                # concatenate patches and labels in single tensors
+                patches = torch.cat(
+                    (positive_patches_tensor, negative_patches_tensor), dim=0
+                ).cuda()
+                labels = (
+                    torch.cat((positive_labels, negative_labels), dim=0)
+                    .type(
+                        torch.LongTensor
+                    )  # LongTensor is required for BCE loss with labels
+                    .cuda()
+                )
 
-            classifier_loss = self.loss_classifier(
-                classifier_predictions[1:], labels
-            )
+                # compute predictions over patches from classifier
+                classifier_predictions = torch.empty((1, 2)).cuda()
+                for patch in patches:
+                    r = self.classifier(
+                        patch.unsqueeze(0)
+                    )  # r shape is (1, 2), 2 classes
+                    classifier_predictions = torch.cat((classifier_predictions, r))
+                    # classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
+                    # each column represent a class and the value inside is the score (probability) computed for that specific class,
+                    # contains logits basically
 
-            # compute general loss
-            loss = segmentation_loss + classifier_loss
+                # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
+                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
 
-            save_predictions(
-                        m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (p*255).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (refined_mask>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        f"{batch_id}",
-                        Path(self.refined_results_folder_test)
-                    )
-            
+                to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
+                refined_mask = refine_mask(p, to_erase_predictions)
+
+                batch_output[output_idx] = refined_mask
+                output_idx = output_idx + 1
+
+                classifier_loss = self.loss_classifier(
+                    classifier_predictions[1:], labels
+                )
+
+                # compute general loss
+                loss = segmentation_loss + classifier_loss
+            else:
+                # TODO is it correct? 
+                loss = segmentation_loss
+                classifier_loss = 0
+
+        # don't save predictions in val set for the moment 
+        
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
                     "val_loss": loss}, 
