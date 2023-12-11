@@ -494,7 +494,7 @@ class SegmentCyst(pl.LightningModule):
 
             save_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                        (p).detach().squeeze().cpu().numpy().astype(np.uint8),
                         (refined_mask>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                         f"{output_idx}",
                         Path(self.refined_results_folder_test)
