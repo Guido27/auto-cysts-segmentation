@@ -322,10 +322,8 @@ class SegmentCyst(pl.LightningModule):
                     classifier_predictions[1:], labels
                 )
 
-         
-
                 # compute training loss
-                loss = segmentation_loss + classifier_loss #TODO capire se la loss deve essere calcolata cosi, probabilmente no
+                loss = segmentation_loss + classifier_loss #TODO capire se la loss deve essere calcolata cosi, probabilmente no se batch size > 1
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
@@ -333,7 +331,9 @@ class SegmentCyst(pl.LightningModule):
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
+                
                 print(f'- batch_{batch_idx:03}_{output_idx}\n  Patches classified total: {predicted_classes.shape[0]}\n  classified as not cysts:{to_erase_predictions.shape[0]}') #debug
+                
                 if rate == 0.75:
                     save_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
@@ -385,7 +385,11 @@ class SegmentCyst(pl.LightningModule):
         # sch = self.lr_schedulers()
         # sch.step()
 
-        return {"loss": segmentation_loss}
+        return {
+                "segmentation_loss": segmentation_loss,
+                "classifier_loss": classifier_loss,
+                "train_loss": loss
+                }
 
     def validation_step(self, batch, batch_id):
         features = batch["features"].float()
