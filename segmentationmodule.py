@@ -328,6 +328,7 @@ class SegmentCyst(pl.LightningModule):
 
                 # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
                 predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                print(labels, predicted_classes) #debug
                 coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
