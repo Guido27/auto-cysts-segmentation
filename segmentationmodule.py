@@ -321,6 +321,8 @@ class SegmentCyst(pl.LightningModule):
                     classifier_predictions[1:], labels
                 )
 
+                print(classifier_loss) #debug
+
                 # compute training loss
                 loss = segmentation_loss + classifier_loss #TODO capire se la loss deve essere calcolata cosi, probabilmente no
 
