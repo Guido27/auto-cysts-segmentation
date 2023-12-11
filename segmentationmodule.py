@@ -330,7 +330,7 @@ class SegmentCyst(pl.LightningModule):
                 to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
-                
+                print(predicted_classes.shape, to_erase_predictions.shape) #debug
                 if rate == 0.75:
                     save_predictions(
                         m.detach().squeeze().cpu().numpy().astype(np.uint8),
@@ -480,7 +480,7 @@ class SegmentCyst(pl.LightningModule):
             classifier_loss = self.loss_classifier(
                 classifier_predictions[1:], labels
             )
-            
+
             # compute general loss
             loss = segmentation_loss + classifier_loss
             
