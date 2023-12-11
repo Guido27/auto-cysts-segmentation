@@ -433,6 +433,8 @@ class SegmentCyst(pl.LightningModule):
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                 )
             
+            print(wrong_coordinates) #debug
+            
             #save wrong as negative patches
             negative_patches_tensor = extract_wrong_predictions(
                 wrong_coordinates,
@@ -490,9 +492,6 @@ class SegmentCyst(pl.LightningModule):
 
             # compute general loss
             loss = segmentation_loss + classifier_loss
-            print(patches.shape, labels.shape)
-            print(f'loss:{loss}, segmentation_loss: {segmentation_loss}, classifier_loss: {classifier_loss}') #debug
-            print(classifier_predictions.dtype, labels.dtype) # debug
             #don't save predictions in val step for the moment
 
         self.log_dict({"val_segmentation_loss": segmentation_loss,
