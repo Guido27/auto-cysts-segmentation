@@ -12,6 +12,7 @@ from utils import (
     extract_real_cysts,
     refine_mask,
     save_predictions,
+    extract_segmented_cysts_test_time,
 )
 
 from PIL import Image
@@ -81,6 +82,7 @@ class SegmentCyst(pl.LightningModule):
         self.epoch_start_time = []
 
         self.refined_results_folder = ""
+        self.refined_results_folder_test = ""
 
         # set automatic optimization as False
         self.automatic_optimization = False
@@ -478,6 +480,10 @@ class SegmentCyst(pl.LightningModule):
         sch.step()
         self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
+    def on_test_epoch_start(self):
+        self.refined_results_folder_test = f"refined_images/test_results"
+        Path(self.refined_results_folder_test).mkdir(parents=True, exist_ok=True)
+
     def test_step(self, batch, batch_id):
         features = batch["features"]
         masks = batch["masks"]
@@ -492,11 +498,50 @@ class SegmentCyst(pl.LightningModule):
             logits = self.forward(features)
 
         timing = [time() - t0, features.shape[0]]
-        # result["test_iou"] = binary_mean_iou(logits, masks)
+        
+        batch_output = torch.empty(masks.shape).cuda()
+        output_idx = 0
+        # extract segmented areas and run classifier on them
+        for p, i, m in zip(logits, features, masks):
+            patches, coordinates = extract_segmented_cysts_test_time(
+                (p>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                i.detach().permute(1, 2, 0).cpu().numpy(),)
+            
+            # compute predictions over patches from classifier
+            classifier_predictions = torch.empty((1, 2)).cuda()
+            for patch in patches:
+                r = self.classifier(
+                    patch.unsqueeze(0)
+                )  # r shape is (1, 2), 2 classes
+                classifier_predictions = torch.cat((classifier_predictions, r))
+                # classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
+                # each column represent a class and the value inside is the score (probability) computed for that specific class,
+                # contains logits basically
+            
+            # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
+            predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+            coordinates = torch.tensor(coordinates).cuda()
+            
+            to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
+            refined_mask = refine_mask(p, to_erase_predictions)
+
+            batch_output[output_idx] = refined_mask
+            output_idx = output_idx + 1
+
         for i in range(features.shape[0]):
             name = batch["image_id"][i]
-            logits_ = logits[i][0]
+            p = logits[i][0]
+            logits_ = batch_output[i][0] #refined masks
+            mask = masks[i][0] #gt masks
 
+            save_predictions(
+                        mask.detach().squeeze().cpu().numpy().astype(np.uint8),
+                        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                        (logits_>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                        name,
+                        Path(self.refined_results_folder_test)
+                    )
+            
             logits_ = (
                 logits_.cpu().numpy() > self.hparams.test_parameters["threshold"]
             ).astype(np.uint8)
@@ -509,5 +554,5 @@ class SegmentCyst(pl.LightningModule):
 
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
-            metric(logits, masks.int())
+            metric(batch_output, masks.int())
             self.log(f"test_{metric_name}", metric, on_step=True, on_epoch=True)
