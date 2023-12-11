@@ -12,6 +12,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 import wandb
+from pytorch_lightning.loggers import TensorBoardLogger
 
 
 def train(args, hparams, name=None):
@@ -76,7 +77,7 @@ def train(args, hparams, name=None):
         }, file)
     print(f'\nSaving in {hparams["checkpoint_callback"]["dirpath"]}\n')
     
-    logger = WandbLogger() if args.wb else None
+    logger = WandbLogger() if args.wb else TensorBoardLogger("logs", name ="TensorBoard")
     if logger:
         logger.log_hyperparams(hparams)
         # logger.watch(model, log='all', log_freq=1)
