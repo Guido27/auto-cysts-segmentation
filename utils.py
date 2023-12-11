@@ -312,7 +312,7 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
-def identify_wrong_predictions(gt, pred, cutoff=0):
+def identify_wrong_predictions(gt, pred, cutoff=0, debug=False):
   """Return a list of wrong patches coordinates segmented in pred
   
   Parameters
@@ -331,7 +331,9 @@ def identify_wrong_predictions(gt, pred, cutoff=0):
   gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
   pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
   pred_seps = tuple([csr_matrix(cv2.fillPoly(np.zeros_like(gt), pts=[c], color=(1))) for c in pred_contours])
-
+  if debug:
+      print(len(gt_contours))
+      print(len(pred_contours))
   sparse_gt = csr_matrix(gt)
   for single_pred, c in zip(pred_seps, pred_contours):
       if not single_pred.multiply(sparse_gt).count_nonzero(): # wrong cyst
