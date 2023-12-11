@@ -332,7 +332,7 @@ class SegmentCyst(pl.LightningModule):
                 refined_mask = refine_mask(p, to_erase_predictions)
                 batch_output[output_idx] = refined_mask
                 
-                print(f'- batch_{batch_idx:03}_{output_idx}\n  Patches classified total: {predicted_classes.shape[0]}\n  classified as not cysts:{to_erase_predictions.shape[0]}') #debug
+                #print(f'- batch_{batch_idx:03}_{output_idx}\n  Patches classified total: {predicted_classes.shape[0]}\n  classified as not cysts:{to_erase_predictions.shape[0]}') #debug
                 
                 if rate == 0.75:
                     save_predictions(
