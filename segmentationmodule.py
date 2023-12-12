@@ -7,8 +7,7 @@ from utils import (
     object_from_dict,
     find_average,
     binary_mean_iou,
-    identify_wrong_predictions,
-    extract_wrong_predictions,
+    extract_wrong_cysts,
     extract_real_cysts,
     refine_mask,
     save_predictions,
@@ -272,16 +271,14 @@ class SegmentCyst(pl.LightningModule):
             # use cyst classifier on each batch image
             for m, p, i, n in zip(gts, logits, features, imgs_name):
                 # m GT mask, i image, p segmentation predictions from model, n name of current image
-                wrong_coordinates = identify_wrong_predictions(
+                
+                negative_patches_tensor, wrong_coordinates = extract_wrong_cysts(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                )
-
-                negative_patches_tensor = extract_wrong_predictions(
-                    wrong_coordinates,
                     i.detach().permute(1, 2, 0).cpu().numpy()
-                    # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
                 )
+                # image i dimensions are permuted because has (C*H*W) shape, 
+                # while slicing in extract_wrong_predictions expects to receive a H,W,C image
 
                 positive_patches_tensor, detected_coordinates = extract_real_cysts(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
@@ -430,17 +427,11 @@ class SegmentCyst(pl.LightningModule):
         for p, i, m in zip(logits, features, masks):
             
             # extract wrng predictions
-            wrong_coordinates = identify_wrong_predictions(
+            negative_patches_tensor, wrong_coordinates = extract_wrong_cysts(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+                    i.detach().permute(1, 2, 0).cpu().numpy()
                 )
-    
-            #save wrong as negative patches
-            negative_patches_tensor = extract_wrong_predictions(
-                wrong_coordinates,
-                i.detach().permute(1, 2, 0).cpu().numpy()
-                # image i dimensions are permuted because has (C*H*W) shape, while slicing in extract_wrong_predictions expects to receive a H,W,C image
-            )
 
             #extract positive patches
             positive_patches_tensor, detected_coordinates = extract_real_cysts(

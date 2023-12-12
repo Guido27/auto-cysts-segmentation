@@ -312,18 +312,27 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
-def identify_wrong_predictions(gt, pred, cutoff=0, debug=False):
-  """Return a list of wrong patches coordinates segmented in pred
+def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
+  """Extract wrong segmented areas in segmentation model predicted mask. 
+  A segmented area in a prediction is considered wrong when the corresponding area in the ground truth segmentation mask is totally black.
+  If a segmented area is wrong, its coordinates are exploited to extract from RGB image the corresponding patch with, if possible, a passing of "padding_default".
+  Each patch is resized to a (p_size * p_size) dimension, default p_size is 64.
   
   Parameters
   ----------
   gt: ground truth mask
-  pred: prediction from segmentation model
+  pred: prediction from segmentation model after thresholding, basically (logits>0.5)
+  image: RGB image corresponding to segmentation prediction and mask
 
   Return
   ------
-  A list of wrong patches coordinates in the following format: (x,y,w,h)
+  t: Tensor oh shape (N*C*p_size*p_size) where N is the number of wrong/negative extracted patches 
+  w_cysts: A list of wrong patches coordinates in the following format: (x,y,w,h). 
+  
+  w_cysts indexes are compatible with first dimension of t, example:
+  t[X,:,:,:] is patch X and its cordinates are saved in w_cysts[X]
   """
+  t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
   w_cysts = []
   gt_contours, _ = cv2.findContours(gt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
   pred_contours, _ = cv2.findContours(pred, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -331,35 +340,16 @@ def identify_wrong_predictions(gt, pred, cutoff=0, debug=False):
   gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
   pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
   pred_seps = tuple([csr_matrix(cv2.fillPoly(np.zeros_like(gt), pts=[c], color=(1))) for c in pred_contours])
-  if debug:
-      print(len(gt_contours), len(pred_contours))
   sparse_gt = csr_matrix(gt)
   for single_pred, c in zip(pred_seps, pred_contours):
       if not single_pred.multiply(sparse_gt).count_nonzero(): # wrong cyst
+       
+        # add coordinates to list of coordinates
         x,y,w,h = cv2.boundingRect(c)
         w_tuple = (x,y,w,h)
         w_cysts.append(w_tuple)
-  return w_cysts 
 
-
-
-def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64):
-    """Extract from original RGB image wrong cysts predicted from segmentation model, their coordinates have to be previously computed with "identify_wrong_predictions" and passed. 
-    Each extracted cyst is resized to 64x64 dimension.
-
-    Parameters
-    ----------
-    coordinates: list of tuples (x,y,w,h) representing coordinates of identified wrong predictions
-    image: original image from which patches are extracted. Image shape has to be (C*H*W), C should be 3 because of RGB image.
-    
-    Return
-    -------
-    t: Tensor of size (N, 3, p_size, p_size) where N is the number of extracted wrong cysts a.k.a. negative patches""" 
-    
-    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
-    if coordinates is not None:
-      for k, (x,y,w,h) in enumerate(coordinates):
-        # avoid that cysts with no space for padding cause errors: get cyst with lower padding
+        #extract patch and save in t
         p = padding_default
         while True:
           crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
@@ -367,12 +357,10 @@ def extract_wrong_predictions(coordinates, image, padding_default=20, p_size=64)
             break
           else:
              p = p-1
-
         resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
         t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
-        #image_to_tensor permute dimensions: resized is np.array of shape (H,W,C), after image_to_tensor is a tensor of shape (C,H,W)
-    
-    return t[1:, :, :, :] #exclude the first empty tensor declared with torch.empty
+
+  return t[1:, :, :, :] ,w_cysts #exclude the first empty tensor declared with torch.empty
 
 def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
     """Extract from RGB image detected cysts. 
