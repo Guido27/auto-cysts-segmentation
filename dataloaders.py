@@ -21,7 +21,7 @@ class SegmentationDataset(Dataset):
         transform: None,
         noG=False,
     ):
-        self.samples = samples
+        self.samples = samples[:5] #TODO delete after debug
         self.transform = transform
         self.length = len(self.samples)
         self.noG = noG
