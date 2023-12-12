@@ -306,6 +306,8 @@ class SegmentCyst(pl.LightningModule):
                 )
                 labels.requires_grad = False
 
+                # TODO calcoalre la loss sulle patch dell'intero batch passandole tutte insieme sotto forma di tensore di shape (N,3,64,64) dove N e il numero di patches estratte
+
                 # compute classifier predictions over patches extracted from segmentation model predicted mask
                 classifier_predictions = torch.empty((1, 2)).cuda()
                 for patch in patches:
