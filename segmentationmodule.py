@@ -296,11 +296,11 @@ class SegmentCyst(pl.LightningModule):
                 )
 
                 # create labels for positive and negative patches
-                positive_labels = torch.ones(positive_patches_tensor.shape[0]).type(torch.LongTensor)
-                negative_labels = torch.zeros(negative_patches_tensor.shape[0]).type(torch.LongTensor)
+                positive_labels = torch.ones(positive_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
+                negative_labels = torch.zeros(negative_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
 
                 # concatenate patches and labels in single tensors
-                patches = torch.cat((patches, positive_patches_tensor, negative_patches_tensor))
+                patches = torch.cat((patches, positive_patches_tensor.cuda(), negative_patches_tensor.cuda()))
                 labels = torch.cat((labels,positive_labels, negative_labels))
                 # concatenate coordinates in the same order
                 coordinates = coordinates + detected_coordinates + wrong_coordinates
