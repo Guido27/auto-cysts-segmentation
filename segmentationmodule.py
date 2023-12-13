@@ -314,7 +314,7 @@ class SegmentCyst(pl.LightningModule):
             
             # get predicted labels from classifier logits
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-            
+            print(predicted_labels.dtype) # debug
             # compute classifier loss over all patches in current batch
             classifier_loss = self.loss_classifier(classifier_predictions, labels[1:]) #exclude first empty label
 

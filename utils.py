@@ -504,6 +504,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
 
   return T
         
+# TODO save prediction, use batch size tensor shaped input
 def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     
     f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
