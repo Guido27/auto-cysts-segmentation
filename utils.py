@@ -477,7 +477,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
   for index in range(logits.shape[0]):
     
     #get current logit
-    current_prediction = logits[index].detach().copy()
+    current_prediction = logits[index].detach().clone()
 
     # get number of extracted patches from current prediction
     max_index = patch_each_image[index] 
