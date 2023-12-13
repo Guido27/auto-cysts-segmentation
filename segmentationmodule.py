@@ -9,7 +9,7 @@ from utils import (
     binary_mean_iou,
     extract_wrong_cysts,
     extract_real_cysts,
-    refine_mask,
+    refine_predicted_masks,
     save_predictions,
     extract_segmented_cysts_test_time,
 )
@@ -82,7 +82,7 @@ class SegmentCyst(pl.LightningModule):
 
         self.refined_results_folder = ""
         self.refined_results_folder_test = ""
-
+        self.p_size = 64 # size of patches for classifier
         # set automatic optimization as False
         self.automatic_optimization = False
 
@@ -211,8 +211,8 @@ class SegmentCyst(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         imgs_name = batch["image_id"]
-        features = batch["features"]
-        masks = batch["masks"]
+        features = batch["features"] #rgb images
+        masks = batch["masks"] #gt masks
 
         # manual steps in order to perform multi-scale training
         size_rates =[0.75] #[0.75, 1.25, 1]
@@ -269,13 +269,21 @@ class SegmentCyst(pl.LightningModule):
             output_idx = 0
 
             # use cyst classifier on each batch image
+            patches = torch.empty((1,3,self.p_size,self.p_size), dtype=torch.float32).cuda()
+            labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
+            labels.requires_grad = False
+            coordinates = []
+            patch_each_image = []
+
+            # TODO perform for loops inside functions and not here in training step
             for m, p, i, n in zip(gts, logits, features, imgs_name):
                 # m GT mask, i image, p segmentation predictions from model, n name of current image
                 
                 negative_patches_tensor, wrong_coordinates = extract_wrong_cysts(
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    i.detach().permute(1, 2, 0).cpu().numpy()
+                    i.detach().permute(1, 2, 0).cpu().numpy(),
+                    p_size=self.p_size
                 )
                 # image i dimensions are permuted because has (C*H*W) shape, 
                 # while slicing in extract_wrong_predictions expects to receive a H,W,C image
@@ -284,67 +292,39 @@ class SegmentCyst(pl.LightningModule):
                     m.detach().squeeze().cpu().numpy().astype(np.uint8),
                     (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                     i.detach().permute(1, 2, 0).cpu().numpy(),
+                    p_size=self.p_size
                 )
 
                 # create labels for positive and negative patches
-                positive_labels = torch.ones(positive_patches_tensor.shape[0])
-                negative_labels = torch.zeros(negative_patches_tensor.shape[0])
+                positive_labels = torch.ones(positive_patches_tensor.shape[0]).type(torch.LongTensor)
+                negative_labels = torch.zeros(negative_patches_tensor.shape[0]).type(torch.LongTensor)
 
                 # concatenate patches and labels in single tensors
-                patches = torch.cat(
-                    (positive_patches_tensor, negative_patches_tensor), dim=0
-                ).cuda()
-                labels = (
-                    torch.cat((positive_labels, negative_labels), dim=0)
-                    .type(
-                        torch.LongTensor
-                    )  # LongTensor is required for BCE loss with labels
-                    .cuda()
-                )
-                labels.requires_grad = False
+                patches = torch.cat((patches, positive_patches_tensor, negative_patches_tensor))
+                labels = torch.cat((labels,positive_labels, negative_labels))
+                # concatenate coordinates in the same order
+                coordinates = coordinates + detected_coordinates + wrong_coordinates
+                # save the total numnber of patches obtained from current segm. model prediction in appropriate list
+                tot_patches = len(detected_coordinates) + len(wrong_coordinates)
+                patch_each_image.append(tot_patches)
 
-                # TODO calcoalre la loss sulle patch dell'intero batch passandole tutte insieme sotto forma di tensore di shape (N,3,64,64) dove N e il numero di patches estratte
 
-                # compute classifier predictions over patches extracted from segmentation model predicted mask
-                classifier_predictions = torch.empty((1, 2)).cuda()
-                for patch in patches:
-                    r = self.classifier(
-                        patch.unsqueeze(0)
-                    )  # r shape is (1, 2), 2 classes
-                    classifier_predictions = torch.cat((classifier_predictions, r))
-                    # INFO: classifier_predictions shape is (N,2) where N is the number of predictions and 2 is the number of classes,
-                    #       each column represent a class and the value inside is the score (probability) computed for that specific class,
-                    #       contains logits basically
+            # compute classifier predictions/logits
+            classifier_predictions = self.classifier(patches[1:,:,:,:]) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
             
-                # compute classifier loss
-                classifier_loss = self.loss_classifier(
-                    classifier_predictions[1:], labels
-                )
+            # get predicted labels from classifier logits
+            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+            
+            # compute classifier loss over all patches in current batch
+            classifier_loss = self.loss_classifier(classifier_predictions, labels[1:]) #exclude first empty label
 
-                # compute training loss
-                loss = segmentation_loss + classifier_loss #TODO capire se la loss deve essere calcolata cosi, probabilmente no se batch size > 1
+            # training loss
+            loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
-                # refine segmentation mask: remove segmented areas classified as False/Not-Cyst from classifier in segmentation mask
-                predicted_classes = torch.max(classifier_predictions[1:], 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-                coordinates = torch.tensor(detected_coordinates + wrong_coordinates).cuda()
-                to_erase_predictions = coordinates[ predicted_classes == 0]  # use predictions on patches as mask label to get coordinates of ones classified as False/0
-                refined_mask = refine_mask(p, to_erase_predictions)
-                batch_output[output_idx] = refined_mask
-                
-                #print(f'- batch_{batch_idx:03}_{output_idx}\n  Patches classified total: {predicted_classes.shape[0]}\n  classified as not cysts:{to_erase_predictions.shape[0]}') #debug
-                
-                if rate == 0.75:
-                    save_predictions(
-                        m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (refined_mask>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        f"batch_{batch_idx:03}_{output_idx}",
-                        Path(self.refined_results_folder)
-                    )
+            # refine predictions
+            refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
 
-                output_idx = output_idx + 1
-
-
+            
             self.log_dict(
                 {
                     "segmentation_loss": segmentation_loss,
@@ -358,7 +338,7 @@ class SegmentCyst(pl.LightningModule):
 
             # passare la refined mask (logits) oppure (refined_mask > 0.5)? -> passare logits, il thresholding lo fa gia la metric da sola
             for metric_name, metric in self.train_metrics.items():
-                metric(batch_output, gts.int())
+                metric(refined_predictions, gts.int())
                 self.log(
                     f"train_{metric_name}",
                     metric,
@@ -390,6 +370,7 @@ class SegmentCyst(pl.LightningModule):
                 "train_loss": loss
                 }
 
+    #TODO aggiornare val_step come train step se funziona tutto
     def validation_step(self, batch, batch_id):
         features = batch["features"]
         masks = batch["masks"]

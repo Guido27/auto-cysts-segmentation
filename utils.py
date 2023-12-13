@@ -453,25 +453,56 @@ def extract_segmented_cysts_test_time(prediction, image, p_size = 64, padding_de
 
     return t[1:, :, :, :],l #exclude the first empty tensor declared with torch.empty in t
 
-def refine_mask(prediction, coordinates):
-    """Refine segmentation prediction, erase segmented cysts in prediction according to coordinates passed.
-    
-    Parameters
-    ----------
-    prediction: logits from segmentation model that have to be refined
-    coordinates: tensor containing coordinates of portion of image to erase (turn it black)
-    
-    Return
-    ------
-    refined prediction: tensor, copy of the original one, with deleted segmented cysts according to coordinates passed
-    """
+def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels):
+  """
+  Info
+  ----
+  Function that refine predictions in current batch performed by segmentation model.
+  
+  Parameters
+  ----------
+  logits: logits predicted from segmentation model which receive the entire batch in input and output predictions of same shape. Shape is (B,1,1024,1024) where B is Batch Size.
+  coordinates: list of N coordinates, each one is associated with a patch. Represents the coordinates of patches in both image and predicted mask from segmentation model
+  patch_each_image: List of lenght equal to batch size, contains in each position the number of patches extracted from each batch image. For example z[3] contains the total number of patches extracted from image/logit of index 3 in current batch.
+  predicted_labels: tensor of shape (N) containing predictions over each patch from classifier. 1 if "Cyst" 0 if "Not Cyst"
 
-    # prediction -> requiresGrad is True, in place operation have to be replaced with not-in-place operation i.e make a copy and edit it
-    # TODO but is it correct making copies? 
-    refined_prediction = prediction.detach().clone()
-    for (x,y,w,h) in coordinates:
-        refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
-    return refined_prediction
+  Return
+  ------
+  T: tensor of shape (logits.shape) which contains refined predictions according to patches classification performed by classifier: patches classified as negative are removed from predicted mask/logit  
+  """
+
+  T = torch.empty((logits.shape))
+  min_index = 0 #set first min_index to -1, min_index is the index of 
+
+  for index in range(logits.shape[0]):
+    
+    #get current logit
+    current_prediction = logits[index].detach().copy()
+
+    # get number of extracted patches from current prediction
+    max_index = patch_each_image[index] 
+
+    # get classifier predictions of patches extracted from current prediction
+    p = predicted_labels[min_index:min_index+max_index] 
+
+    # get coordinates of patches in p
+    c = coordinates[min_index:min_index+max_index]
+
+    # keep only coordinates of patches classified as not cysts from classifier 
+    c = c[p==0]
+
+    # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
+    erasing_mask = torch.ones(current_prediction.shape)
+    for (x,y,w,h) in c:
+      erasing_mask[0, (y):(y+h), (x):(x+w)] = torch.zeros((1,h,w))
+
+    # refine mask erasing patches predicted as false with erasing_mask matrix multiplication and save computed refined mask in T (T[index] will contain refined version of logits[index])
+    T[index] = current_prediction*erasing_mask
+
+    #update min_index
+    min_index = max_index
+
+  return T
         
 def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     

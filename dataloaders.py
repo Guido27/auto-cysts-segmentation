@@ -36,7 +36,7 @@ class SegmentationDataset(Dataset):
         image = imread(image_path)
         mask = imread(mask_path)
 
-        if self.noG: # TODO: What if done after the augmentation the image?
+        if self.noG:
             image[:, :, 1] = 0
 
         # apply augmentations
