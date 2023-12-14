@@ -327,7 +327,7 @@ class SegmentCyst(pl.LightningModule):
                     "classifier_loss": classifier_loss,
                     "train_loss": loss,
                 }, 
-                on_step=True,
+                on_step=False,
                 on_epoch=True,
                 prog_bar=True,
             )
@@ -338,10 +338,13 @@ class SegmentCyst(pl.LightningModule):
                 self.log(
                     f"train_{metric_name}",
                     metric,
-                    on_step=True,
+                    on_step=False,
                     on_epoch=True,
                     prog_bar=True,
                 )
+
+            
+            #TODO save predictions
 
             self.manual_backward(loss)
 
@@ -417,13 +420,13 @@ class SegmentCyst(pl.LightningModule):
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
                     "val_loss": loss}, 
-                    on_step=True,
+                    on_step=False,
                     on_epoch=True,
                     prog_bar=True,)
        
         for metric_name, metric in self.val_metrics.items():
             metric(refined_predictions, masks.int()) # compute metrics on refined masks
-            self.log(f"val_{metric_name}", metric, on_step=True, on_epoch=True)
+            self.log(f"val_{metric_name}", metric, on_step=False, on_epoch=True)
 
 
     def test_step(self, batch, batch_id):
