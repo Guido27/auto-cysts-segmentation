@@ -343,7 +343,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
             #extract patch and save in t
             p = padding_default 
             while True:
-              crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+              crop = i[(y-p):(y+h+p), (x-p):(x+w+p)]
               if (crop.shape[0] != 0 and crop.shape[1] != 0):
                 break
               else:
@@ -374,7 +374,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
           # avoid that cysts with no space for padding cause errors: get cyst with lower padding
           p = padding_default
           while True:
-            crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+            crop = i[(y-p):(y+h+p), (x-p):(x+w+p)]
             if crop.shape[0] != 0 and crop.shape[1] != 0:
               break
             else:

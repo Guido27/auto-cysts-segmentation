@@ -12,6 +12,7 @@ from utils import (
     refine_predicted_masks,
     save_predictions,
     extract_segmented_cysts_test_time,
+    extract_patches_train_val
 )
 
 from PIL import Image
@@ -300,15 +301,27 @@ class SegmentCyst(pl.LightningModule):
                 negative_labels = torch.zeros(negative_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
 
                 # concatenate patches and labels in single tensors
-                patches = torch.cat((patches, positive_patches_tensor.cuda(), negative_patches_tensor.cuda()))
-                labels = torch.cat((labels,positive_labels, negative_labels))
+                patches = torch.cat((patches, negative_patches_tensor.cuda(), positive_patches_tensor.cuda()))
+                labels = torch.cat((labels, negative_labels, positive_labels))
                 # concatenate coordinates in the same order
-                coordinates = coordinates + detected_coordinates + wrong_coordinates
+                coordinates = coordinates +  wrong_coordinates + detected_coordinates 
                 # save the total numnber of patches obtained from current segm. model prediction in appropriate list
                 tot_patches = len(detected_coordinates) + len(wrong_coordinates)
                 patch_each_image.append(tot_patches)
 
+            #start debug
+            #test new function
+            patches2, labels2, coordinates2, patch_each_image2 = extract_patches_train_val(gts, logits,features)
+            
+            print(patches2.shape, patches.shape)
 
+            print(labels2.shape, labels.shape)
+
+            print(len(coordinates2), len(coordinates))
+
+            print(len(patch_each_image2), len(patch_each_image))
+            #end debug
+            
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches[1:,:,:,:]) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
             
