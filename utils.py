@@ -482,6 +482,10 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
         p = torch.tensor(predicted_labels[min_index:min_index+max_index])   
         # get coordinates of patches in p 
         c = torch.as_tensor(coordinates[min_index:min_index+max_index])  
+
+        print(c.device) #debug
+        print(p.device) #debug
+
         # keep only coordinates of patches classified as not cysts from classifier 
         c = c[p==0]  
         # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
