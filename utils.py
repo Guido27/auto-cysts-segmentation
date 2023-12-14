@@ -478,14 +478,10 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
         current_prediction = logits[index].detach().clone()   
         # get number of extracted patches from current prediction
         max_index = patch_each_image[index]   
-        # get classifier predictions of patches extracted from current prediction
+        # get classifier predictions of patches extracted from current prediction as tensor to exploit indexing
         p = torch.tensor(predicted_labels[min_index:min_index+max_index])   
-        # get coordinates of patches in p 
-        c = torch.as_tensor(coordinates[min_index:min_index+max_index])  
-
-        print(c.device) #debug
-        print(p.device) #debug
-
+        # get coordinates of patches in p, also here as tensor to exploit indexing
+        c = torch.as_tensor(coordinates[min_index:min_index+max_index]).cuda() # cuda because p will be on GPU
         # keep only coordinates of patches classified as not cysts from classifier 
         c = c[p==0]  
         # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
