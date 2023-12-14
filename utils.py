@@ -316,7 +316,7 @@ def split_dataset(hparams):
 def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
     #TODO write description 
 
-    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
+    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32).cuda() #initialize return tensor of tensors
     coordinates = []
     patch_each_image = [] #contains the total number of extracted patches from each image
     labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
