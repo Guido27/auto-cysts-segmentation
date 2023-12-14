@@ -21,7 +21,7 @@ class SegmentationDataset(Dataset):
         transform: None,
         noG=False,
     ):
-        self.samples = samples[:12] #TODO delete slicing after debug
+        self.samples = samples
         self.transform = transform
         self.length = len(self.samples)
         self.noG = noG

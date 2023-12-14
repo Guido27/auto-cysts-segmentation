@@ -464,14 +464,14 @@ class SegmentCyst(pl.LightningModule):
             logits_ = refined_predictions[i][0] #refined masks
             mask = masks[i][0] #gt masks
 
-            save_predictions(
+            """save_predictions(
                         mask.detach().squeeze().cpu().numpy().astype(np.uint8),
                         (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                         (logits_>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
                         name,
                         Path(self.refined_results_folder_test)
                     )
-            
+            """
             logits_ = (
                 logits_.cpu().numpy() > self.hparams.test_parameters["threshold"]
             ).astype(np.uint8)
