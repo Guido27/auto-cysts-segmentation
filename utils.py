@@ -336,7 +336,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
       gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
       pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
       pred_seps = tuple([csr_matrix(cv2.fillPoly(np.zeros_like(m), pts=[c], color=(1))) for c in pred_contours])
-      sparse_gt = csr_matrix(gt)
+      sparse_gt = csr_matrix(m)
       for single_pred, c in zip(pred_seps, pred_contours):
           if not single_pred.multiply(sparse_gt).count_nonzero(): # wrong cyst
             # add coordinates to list of coordinates
