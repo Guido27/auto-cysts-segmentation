@@ -481,13 +481,18 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
         # get classifier predictions of patches extracted from current prediction
         p = torch.tensor(predicted_labels[min_index:min_index+max_index])   
         # get coordinates of patches in p 
-        c = coordinates[min_index:min_index+max_index]  
+        c = torch.as_tensor(coordinates[min_index:min_index+max_index])  
         # keep only coordinates of patches classified as not cysts from classifier 
-        c = c[p==0] #FIXME: indicizzare una lista con un tensore non é possibile -> vedi colab per soluzione  
+        c = c[p==0]  
         # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
         erasing_mask = torch.ones(current_prediction.shape)
-        for (x,y,w,h) in c:
-          erasing_mask[0, (y):(y+h), (x):(x+w)] = torch.zeros((1,h,w))    
+        for c_tensor in c:
+            # c_tensor has 4 elements: [x,y,w,h]
+            x = int(c_tensor[0])
+            y = int(c_tensor[1])
+            w = int(c_tensor[2])
+            h = int(c_tensor[3])
+            erasing_mask[0, (y):(y+h), (x):(x+w)] = torch.zeros((1,h,w))    
         # refine mask erasing patches predicted as false with erasing_mask matrix multiplication and save computed refined mask in T (T[index] will contain refined version of logits[index])
         T[index] = current_prediction*erasing_mask    
         #update min_index
