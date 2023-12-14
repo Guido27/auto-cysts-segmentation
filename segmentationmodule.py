@@ -404,7 +404,7 @@ class SegmentCyst(pl.LightningModule):
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
             # refine predictions
             refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
-            classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
+            classifier_loss = self.loss_classifier(classifier_predictions, labels)
             loss = segmentation_loss + classifier_loss
         else:
             # no predictions from segmentation model, classifier have nothing to do and no mask have to be refined
