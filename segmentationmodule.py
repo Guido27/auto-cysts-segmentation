@@ -94,6 +94,7 @@ class SegmentCyst(pl.LightningModule):
         else:
             return self.model(batch)
 
+    # TODO provare ad usare optimizer e/o scheduler diversi per classificatore e segmentation model
     def configure_optimizers(self):
         optimizer = object_from_dict(
             self.hparams.optimizer,
