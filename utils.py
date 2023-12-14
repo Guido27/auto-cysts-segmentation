@@ -316,7 +316,7 @@ def split_dataset(hparams):
 def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
     #TODO write description 
 
-    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32).cuda() #initialize return tensor of tensors
+    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
     coordinates = []
     patch_each_image = [] #contains the total number of extracted patches from each image
     labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
@@ -327,6 +327,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
       m = m.detach().squeeze().cpu().numpy().astype(np.uint8)
       predicted = (p>0.5).detach().squeeze().cpu().numpy().astype(np.uint8) # get segmentation model predicted mask from current predicted logits
       i = i.detach().permute(1, 2, 0).cpu().numpy() # permute image as expected from following code
+      
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
       #### compute NEGATIVE PATCHES for current image
@@ -355,7 +356,9 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
             negative_counter = negative_counter + 1 
       # compute labels for extracted negative patches
       labels = torch.cat((labels,torch.zeros((negative_counter)).type(torch.LongTensor).cuda()))    
+      
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+      
       #### compute POSITIVE PATCHES for current image
       positive_counter = 0
       #threshold predicted mask in order to extract contours of cysts
@@ -392,7 +395,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
       patch_each_image.append(len(coordinates)) 
 
     #exclude always the first empty tensor declared with torch.empty
-    return t[1:, :, :, :], labels[1:], coordinates, patch_each_image
+    return t[1:, :, :, :].cuda(), labels[1:], coordinates, patch_each_image
 
 def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
   """Extract wrong segmented areas in segmentation model predicted mask. 
