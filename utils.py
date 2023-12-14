@@ -312,6 +312,86 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
+# NOTE: funzione che dovrebbe sostituire il for loop nel train step per estrazione di patch, labels ecc
+def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
+    #TODO write description 
+    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
+    coordinates = []
+    patch_each_image = [] #contains the total number of extracted patches from each image
+    labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
+    labels.requires_grad = False
+  
+    for m,p,i in zip(gt, pred, image):
+      # m GT mask, i image, p segmentation predictions from model   
+      #get segmentation model predicted mask from current predicted logits
+      predicted = (p>0.5).cpu().numpy().astype(np.uint8)    
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+      #### compute NEGATIVE PATCHES for current image
+      negative_counter = 0  
+      gt_contours, _ = cv2.findContours(gt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      pred_contours, _ = cv2.findContours(predicted, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)    
+      gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
+      pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
+      pred_seps = tuple([csr_matrix(cv2.fillPoly(np.zeros_like(gt), pts=[c], color=(1))) for c in pred_contours])
+      sparse_gt = csr_matrix(gt)
+      for single_pred, c in zip(pred_seps, pred_contours):
+          if not single_pred.multiply(sparse_gt).count_nonzero(): # wrong cyst
+            # add coordinates to list of coordinates
+            x,y,w,h = cv2.boundingRect(c)
+            coordinates.append((x,y,w,h)) 
+            #extract patch and save in t
+            p = padding_default 
+            while True:
+              crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+              if (crop.shape[0] != 0 and crop.shape[1] != 0):
+                break
+              else:
+                 p = p-1    
+            resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+            t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
+            negative_counter = negative_counter + 1 
+      # compute labels for extracted negative patches
+      labels = torch.cat((labels,torch.zeros((negative_counter)).type(torch.LongTensor).cuda()))    
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+      #### compute POSITIVE PATCHES for current image
+      positive_counter = 0
+      #threshold predicted mask in order to extract contours of cysts
+      _, thresh = cv2.threshold(predicted*255, 127, 255, 0) #mask * 255 because threshold expects to have integer values between 0 and 255
+      # find contours of segmented areas in thresholded image
+      contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+      #iterate over segmented areas contours to find ones with cysts in it
+      for k in range(len(contours)):
+    
+        cnt = contours[k]
+        x,y,w,h = cv2.boundingRect(cnt)
+
+        # if a segmented area has an intersection with a segmented portion in gt mask: extract it (with padding) as positive patch...
+        if m[(y):(y+h), (x):(x+w)].any():  
+          # ... and add coordinates to coordinates list
+          coordinates.append((x,y,w,h))
+          # avoid that cysts with no space for padding cause errors: get cyst with lower padding
+          p = padding_default
+          while True:
+            crop = image[(y-p):(y+h+p), (x-p):(x+w+p)]
+            if crop.shape[0] != 0 and crop.shape[1] != 0:
+              break
+            else:
+               p = p-1  
+          resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+          t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
+          positive_counter = positive_counter + 1
+    
+      # compute labels for extracted positive patches
+      labels = torch.cat((labels,torch.ones((positive_counter)).type(torch.LongTensor).cuda()))
+    
+      # compute total number of extracted patches from current image and add it to list
+      patch_each_image.append(len(coordinates)) 
+
+    #exclude always the first empty tensor declared with torch.empty
+    return t[1:, :, :, :], labels[1:], coordinates, patch_each_image
+
 def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
   """Extract wrong segmented areas in segmentation model predicted mask. 
   A segmented area in a prediction is considered wrong when the corresponding area in the ground truth segmentation mask is totally black.
