@@ -324,9 +324,8 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
   
     for m,p,i in zip(gt, pred, image):
       # m GT mask, i image, p segmentation predictions from model  
-      m = m.squeeze().detach().cpu().numpy().astype(np.uint8)
-      print(m.shape) #debug
-      predicted = (p>0.5).cpu().numpy().astype(np.uint8) # get segmentation model predicted mask from current predicted logits
+      m = m.detach().squeeze().cpu().numpy().astype(np.uint8)
+      predicted = (p>0.5).detach().squeeze().cpu().numpy().astype(np.uint8) # get segmentation model predicted mask from current predicted logits
       i = i.detach().permute(1, 2, 0).cpu().numpy() # permute image as expected from following code
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
