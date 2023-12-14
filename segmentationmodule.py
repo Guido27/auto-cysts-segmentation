@@ -7,8 +7,6 @@ from utils import (
     object_from_dict,
     find_average,
     binary_mean_iou,
-    extract_wrong_cysts,
-    extract_real_cysts,
     refine_predicted_masks,
     save_predictions,
     extract_segmented_cysts_test_time,
@@ -264,70 +262,59 @@ class SegmentCyst(pl.LightningModule):
             else:
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
-            # logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
+ 
 
-            batch_output = torch.empty(gts.shape).cuda() # refined masks computed in current batch will be saved here to compute metrics
-            output_idx = 0
 
             # use cyst classifier on each batch image
-            patches = torch.empty((1,3,self.p_size,self.p_size), dtype=torch.float32).cuda()
-            labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
-            labels.requires_grad = False
-            coordinates = []
-            patch_each_image = []
+            #patches = torch.empty((1,3,self.p_size,self.p_size), dtype=torch.float32).cuda()
+            #labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
+            #labels.requires_grad = False
+            #coordinates = []
+            #patch_each_image = []
 
-            # TODO perform for loops inside functions and not here in training step
-            for m, p, i, n in zip(gts, logits, features, imgs_name):
-                # m GT mask, i image, p segmentation predictions from model, n name of current image
-                
-                negative_patches_tensor, wrong_coordinates = extract_wrong_cysts(
-                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    i.detach().permute(1, 2, 0).cpu().numpy(),
-                    p_size=self.p_size
-                )
-                # image i dimensions are permuted because has (C*H*W) shape, 
-                # while slicing in extract_wrong_predictions expects to receive a H,W,C image
+            #for m, p, i, n in zip(gts, logits, features, imgs_name):
+            #    # m GT mask, i image, p segmentation predictions from model, n name of current image
+            #    
+            #    negative_patches_tensor, wrong_coordinates = extract_wrong_cysts(
+            #        m.detach().squeeze().cpu().numpy().astype(np.uint8),
+            #        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+            #        i.detach().permute(1, 2, 0).cpu().numpy(),
+            #        p_size=self.p_size
+            #    )
+            #    # image i dimensions are permuted because has (C*H*W) shape, 
+            #    # while slicing in extract_wrong_predictions expects to receive a H,W,C image
 
-                positive_patches_tensor, detected_coordinates = extract_real_cysts(
-                    m.detach().squeeze().cpu().numpy().astype(np.uint8),
-                    (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                    i.detach().permute(1, 2, 0).cpu().numpy(),
-                    p_size=self.p_size
-                )
+            #    positive_patches_tensor, detected_coordinates = extract_real_cysts(
+            #        m.detach().squeeze().cpu().numpy().astype(np.uint8),
+            #        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
+            #        i.detach().permute(1, 2, 0).cpu().numpy(),
+            #        p_size=self.p_size
+            #    )
 
-                # create labels for positive and negative patches
-                positive_labels = torch.ones(positive_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
-                negative_labels = torch.zeros(negative_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
+            #    # create labels for positive and negative patches
+            #    positive_labels = torch.ones(positive_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
+            #    negative_labels = torch.zeros(negative_patches_tensor.shape[0]).type(torch.LongTensor).cuda()
 
-                # concatenate patches and labels in single tensors
-                patches = torch.cat((patches, negative_patches_tensor.cuda(), positive_patches_tensor.cuda()))
-                labels = torch.cat((labels, negative_labels, positive_labels))
-                # concatenate coordinates in the same order
-                coordinates = coordinates +  wrong_coordinates + detected_coordinates 
-                # save the total numnber of patches obtained from current segm. model prediction in appropriate list
-                tot_patches = len(detected_coordinates) + len(wrong_coordinates)
-                patch_each_image.append(tot_patches)
+            #    # concatenate patches and labels in single tensors
+            #    patches = torch.cat((patches, negative_patches_tensor.cuda(), positive_patches_tensor.cuda()))
+            #    labels = torch.cat((labels, negative_labels, positive_labels))
+            #    # concatenate coordinates in the same order
+            #    coordinates = coordinates +  wrong_coordinates + detected_coordinates 
+            #    # save the total numnber of patches obtained from current segm. model prediction in appropriate list
+            #    tot_patches = len(detected_coordinates) + len(wrong_coordinates)
+            #    patch_each_image.append(tot_patches)
 
-            #start debug
-            #test new function
-            patches2, labels2, coordinates2, patch_each_image2 = extract_patches_train_val(gts, logits,features)
             
-            print(torch.eq(patches[1:], patches2).all())
-            print(torch.eq(labels2,labels[1:]).all())
-            print(coordinates == coordinates2)
-            print(patch_each_image == patch_each_image2)
-            print(patch_each_image, patch_each_image2)
-            #end debug
-            
+            patches, labels, coordinates, patch_each_image = extract_patches_train_val(gts, logits,features)
+    
             # compute classifier predictions/logits
-            classifier_predictions = self.classifier(patches[1:,:,:,:]) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
+            classifier_predictions = self.classifier(patches) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
             
             # get predicted labels from classifier logits
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
           
             # compute classifier loss over all patches in current batch
-            classifier_loss = self.loss_classifier(classifier_predictions, labels[1:]) #exclude first empty label
+            classifier_loss = self.loss_classifier(classifier_predictions, labels) #exclude first empty label
 
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
