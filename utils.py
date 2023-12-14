@@ -312,7 +312,7 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
-def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
+def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
     #TODO write description 
 
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
@@ -396,7 +396,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
     #exclude always the first empty tensor declared with torch.empty
     return t[1:, :, :, :].cuda(), labels[1:], coordinates, patch_each_image
 
-# NOTE this function has been incorporated in extract_patches_train_val 
+# NOTE this function has been incorporated in extract_patches 
 def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
   """Extract wrong segmented areas in segmentation model predicted mask. 
   A segmented area in a prediction is considered wrong when the corresponding area in the ground truth segmentation mask is totally black.
@@ -447,7 +447,7 @@ def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default 
 
   return t[1:, :, :, :] ,w_cysts #exclude the first empty tensor declared with torch.empty
 
-# NOTE this function has been incorporated in extract_patches_train_val 
+# NOTE this function has been incorporated in extract_patches
 def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
     """Extract from RGB image detected cysts. 
     In order to define if a segmented element is a true cyst the ground truth mask is used: if a segmented object in the prediction mask has even just a single
