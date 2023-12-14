@@ -315,6 +315,9 @@ def split_dataset(hparams):
 # NOTE: funzione che dovrebbe sostituire il for loop nel train step per estrazione di patch, labels ecc
 def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
     #TODO write description 
+    
+    gt = gt.detach().cpu().numpy().astype(np.uint8)
+
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
     coordinates = []
     patch_each_image = [] #contains the total number of extracted patches from each image
@@ -324,7 +327,8 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
     for m,p,i in zip(gt, pred, image):
       # m GT mask, i image, p segmentation predictions from model   
       #get segmentation model predicted mask from current predicted logits
-      predicted = (p>0.5).cpu().numpy().astype(np.uint8)    
+      predicted = (p>0.5).cpu().numpy().astype(np.uint8)   
+      i = i.detach().permute(1, 2, 0).cpu().numpy() # permute image as expected from following code
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
       #### compute NEGATIVE PATCHES for current image
