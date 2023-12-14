@@ -312,7 +312,6 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
-# NOTE: funzione che dovrebbe sostituire il for loop nel train step per estrazione di patch, labels ecc
 def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
     #TODO write description 
 
@@ -587,7 +586,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
 
     return T
         
-# TODO save prediction, use batch size tensor shaped input
+# TODO update this function: save prediction using logits batch tensor output as input
 def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
     
     f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
