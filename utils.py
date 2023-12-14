@@ -333,7 +333,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
     
       #### compute NEGATIVE PATCHES for current image
       negative_counter = 0  
-      gt_contours, _ = cv2.findContours(gt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      gt_contours, _ = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       pred_contours, _ = cv2.findContours(predicted, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)    
       gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
       pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
