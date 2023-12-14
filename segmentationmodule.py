@@ -313,7 +313,7 @@ class SegmentCyst(pl.LightningModule):
             #test new function
             patches2, labels2, coordinates2, patch_each_image2 = extract_patches_train_val(gts, logits,features)
             
-            print(torch.eq(patches[1:] == patches2))
+            print(torch.eq(patches[1:], patches2))
             print(torch.eq(labels2,labels[1:]))
             print(coordinates == coordinates2)
             print(patch_each_image == patch_each_image2)
