@@ -317,6 +317,7 @@ class SegmentCyst(pl.LightningModule):
             print(torch.eq(labels2,labels[1:]).all())
             print(coordinates == coordinates2)
             print(patch_each_image == patch_each_image2)
+            print(patch_each_image, patch_each_image2)
             #end debug
             
             # compute classifier predictions/logits

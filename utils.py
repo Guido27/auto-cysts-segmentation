@@ -392,7 +392,7 @@ def extract_patches_train_val(gt, pred, image, cutoff=0, p_size = 64, padding_de
       labels = torch.cat((labels,torch.ones((positive_counter)).type(torch.LongTensor).cuda()))
     
       # compute total number of extracted patches from current image and add it to list
-      patch_each_image.append(len(coordinates)) 
+      patch_each_image.append(positive_counter + negative_counter)
 
     #exclude always the first empty tensor declared with torch.empty
     return t[1:, :, :, :].cuda(), labels[1:], coordinates, patch_each_image
