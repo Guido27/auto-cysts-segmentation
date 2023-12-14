@@ -469,7 +469,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
     ------
     T: tensor of shape (logits.shape) which contains refined predictions according to patches classification performed by classifier: patches classified as negative are removed from predicted mask/logit  
     """ 
-    T = torch.empty((logits.shape))
+    T = torch.empty((logits.shape)).cuda()
     min_index = 0 #set first min_index to -1, min_index is the index of     
     
     for index in range(logits.shape[0]):
