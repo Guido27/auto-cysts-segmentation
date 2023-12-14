@@ -485,7 +485,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
         # keep only coordinates of patches classified as not cysts from classifier 
         c = c[p==0]  
         # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
-        erasing_mask = torch.ones(current_prediction.shape)
+        erasing_mask = torch.ones(current_prediction.shape).cuda()
         for c_tensor in c:
             # c_tensor has 4 elements: [x,y,w,h]
             x = int(c_tensor[0])
