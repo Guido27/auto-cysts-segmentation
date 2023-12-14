@@ -394,14 +394,14 @@ class SegmentCyst(pl.LightningModule):
 
         patches, labels, coordinates, patch_each_image = extract_patches(masks, logits, features)
     
-        # compute classifier predictions/logits
-        classifier_predictions = self.classifier(patches) # pass patches, classifier_predictions has shape (N,2), contains logits/probabilities for each class
-        
-        # get predicted labels from classifier logits
-        predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-        
-        if patches.shape[0] != 0:
-            # segmentation model predicted something, classifier have to classify patches
+        if patches.shape[0] != 0: 
+        # if segmentation model predicted something, classifier have to classify patches
+
+            # compute classifier predictions/logits
+            classifier_predictions = self.classifier(patches) # pass patches, classifier_predictions has shape (N,2), contains logits/probabilities for each class
+
+            # get predicted labels from classifier logits
+            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
             # refine predictions
             refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
             classifier_loss = self.loss_classifier(classifier_predictions[1:], labels)
@@ -443,14 +443,12 @@ class SegmentCyst(pl.LightningModule):
 
         patches, _, coordinates, patch_each_image = extract_patches(masks, logits, features) #patches gt labels are useless in test step
     
-        # compute classifier predictions/logits
-        classifier_predictions = self.classifier(patches) # pass patches, classifier_predictions has shape (N,2), contains logits/probabilities for each class
-        
-        # get predicted labels from classifier logits
-        predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-        
         if patches.shape[0] != 0:
             # segmentation model predicted something, classifier have to classify patches
+            # compute classifier predictions/logits
+            classifier_predictions = self.classifier(patches) # pass patches, classifier_predictions has shape (N,2), contains logits/probabilities for each class
+            # get predicted labels from classifier logits
+            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
             # refine predictions
             refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
         else:
