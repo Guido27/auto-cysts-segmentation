@@ -317,7 +317,7 @@ class SegmentCyst(pl.LightningModule):
 
             print(labels2.shape, labels.shape)
 
-            print(labels2 == labels)
+            print(labels2 == labels[1:])
 
             print(len(coordinates2), len(coordinates))
 
