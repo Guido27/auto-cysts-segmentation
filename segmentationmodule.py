@@ -332,7 +332,7 @@ class SegmentCyst(pl.LightningModule):
                 prog_bar=True,
             )
 
-            # passare la refined mask (logits) oppure (refined_mask > 0.5)? -> passare logits, il thresholding lo fa gia la metric da sola
+            # passare la refined mask (logits) oppure (refined_mask > 0.5)? -> passare le logits, il thresholding lo fa gia la metric da sola
             for metric_name, metric in self.train_metrics.items():
                 metric(refined_predictions, gts.int())
                 self.log(
@@ -343,15 +343,16 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,
                 )
 
-            # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
-            if batch_idx % 5 == 0:
-                save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx}",Path(self.refined_results_folder))
-
             self.manual_backward(loss)
 
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
 
             optimizer.step()
+
+            # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
+            if batch_idx % 5 == 0:
+                save_images(masks[:2],logits[:2], refined_predictions[:2],f"batch_idx_{batch_idx}",Path(self.refined_results_folder))
+                print("SAVED!") # debug
 
             # scheduler step after each optimizer.step(), i.e. one for each batch in each resize
             # sch = self.lr_schedulers()
