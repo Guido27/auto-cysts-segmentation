@@ -630,7 +630,7 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
         ax2.imshow((p>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
         ax3.imshow((r>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
 
-    plt.savefig(path / f'{image_name}.png')
+    f.savefig(path / f'{image_name}.png')
     
    
 
