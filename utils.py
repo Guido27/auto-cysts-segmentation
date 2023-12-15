@@ -593,6 +593,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
         c = c[p==0]  
         # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
         erasing_mask = torch.ones(current_prediction.shape).cuda()
+        erasing_mask.requires_grad = False # debug
         for c_tensor in c:
             # c_tensor has 4 elements: [x,y,w,h]
             x = int(c_tensor[0])
