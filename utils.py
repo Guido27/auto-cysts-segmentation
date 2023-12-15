@@ -621,21 +621,25 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     """
     number_of_images = segmented_masks.shape[0]
     f, cols = plt.subplots(number_of_images, 3, figsize=(15,20))
+
     if(number_of_images > 1):
         cols[0,0].set_title('GT masks')
         cols[0,1].set_title("Predicted masks")
         cols[0,2].set_title("Refined masks")
+        for (ax1, ax2, ax3), m, p, r in  zip(cols,gt_masks,segmented_masks,refined_masks):
+            ax1.imshow(m.detach().squeeze().cpu().numpy().astype(np.uint8)*255, cmap='gray') 
+            ax2.imshow((p>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
+            ax3.imshow((r>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
     else:
         cols[0].set_title('GT masks')
         cols[1].set_title("Predicted masks")
         cols[2].set_title("Refined masks")
-        
-    for (ax1, ax2, ax3), m, p, r in  zip(cols,gt_masks,segmented_masks,refined_masks):
-        ax1.imshow(m.detach().squeeze().cpu().numpy().astype(np.uint8)*255, cmap='gray') 
-        ax2.imshow((p>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
-        ax3.imshow((r>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
+        cols[0].imshow(gt_masks.detach().squeeze().cpu().numpy().astype(np.uint8)*255, cmap='gray') 
+        cols[1].imshow((segmented_masks>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
+        cols[2].imshow((refined_masks>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
 
     f.savefig(path / f'{image_name}.png')
+    plt.close()
     
    
 
