@@ -94,36 +94,53 @@ class SegmentCyst(pl.LightningModule):
             return self.model(batch)
 
     # TODO provare ad usare optimizer e/o scheduler diversi per classificatore e segmentation model
+
     def configure_optimizers(self):
-        optimizer = object_from_dict(
-            self.hparams.optimizer,
-            params=[x for x in self.model.parameters() if x.requires_grad],
-        )
-        opt = [optimizer]
+        #choosing a optimizer for classifier
+        c_optimizer = torch.optim.Adam(self.parameters() , lr = 1e-5)
+        #choosing LR scheduler for classifier
+        c_sch = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer = c_optimizer, T_0 = 10, T_mult = 2)
 
-        if self.hparams.scheduler is not None:
-            if self.hparams.scheduler["type"] == "torch.optim.lr_scheduler.LambdaLR":
-                decay_epoch = 1  # how many epochs have to pass before changing the LR
-                lambda1 = lambda epoch: 0.1 ** (epoch // decay_epoch)
-                scheduler = object_from_dict(
-                    self.hparams.scheduler, optimizer=optimizer, lr_lambda=lambda1
-                )
+        # choosing a optimizer for sementation model
+        s_optimizer = torch.optim.Adam(self.parameters(), lr = 1e-4)
+        decay_epoch = 1  # how many epochs have to pass before changing the LR
+        lambda1 = lambda epoch: 0.1 ** (epoch // decay_epoch)
+        s_sch = torch.optim.lr_scheduler.LambdaLR(optimizer=s_optimizer, lr_lambda=lambda1)
 
-            else:
-                scheduler = object_from_dict(
-                    self.hparams.scheduler, optimizer=optimizer
-                )
+        return ({"optimizer": s_optimizer, "lr_scheduler": s_sch}, {"optimizer": c_optimizer, "lr_scheduler": c_sch})
 
-                if type(scheduler) == ReduceLROnPlateau:
-                    return {
-                        "optimizer": optimizer,
-                        "lr_scheduler": scheduler,
-                        "monitor": "val_iou",
-                    }
 
-            return opt, [scheduler]
 
-        return opt
+    #def configure_optimizers(self):
+    #    optimizer = object_from_dict(
+    #        self.hparams.optimizer,
+    #        params=[x for x in self.model.parameters() if x.requires_grad],
+    #    )
+    #    opt = [optimizer]
+    # 
+    #    if self.hparams.scheduler is not None:
+    #        if self.hparams.scheduler["type"] == "torch.optim.lr_scheduler.LambdaLR":
+    #            decay_epoch = 1  # how many epochs have to pass before changing the LR
+    #            lambda1 = lambda epoch: 0.1 ** (epoch // decay_epoch)
+    #            scheduler = object_from_dict(
+    #                self.hparams.scheduler, optimizer=optimizer, lr_lambda=lambda1
+    #            )
+    #
+    #        else:
+    #            scheduler = object_from_dict(
+    #                self.hparams.scheduler, optimizer=optimizer
+    #            )
+    #
+    #            if type(scheduler) == ReduceLROnPlateau:
+    #                return {
+    #                    "optimizer": optimizer,
+    #                    "lr_scheduler": scheduler,
+    #                    "monitor": "val_iou",
+    #                }
+    #
+    #        return opt, [scheduler]
+    #
+    #    return opt
 
     def log_images(self, features, masks, logits_, batch_idx, rate):
         # logits_ is the output of the last layer of the model
@@ -200,8 +217,11 @@ class SegmentCyst(pl.LightningModule):
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
         #  scheduler.step() after each train epoch
-        sch = self.lr_schedulers()
-        sch.step()
+        #sch = self.lr_schedulers()
+        #sch.step()
+        # TODO uppdate scheduler of segmentation model here
+        segmentation_scheduler, _ = self.lr_schedulers()
+        segmentation_scheduler.step()
         self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
     def on_test_epoch_start(self):
@@ -217,9 +237,11 @@ class SegmentCyst(pl.LightningModule):
         size_rates =[0.75] #[0.75, 1.25, 1]
         for rate in size_rates:
     
-            optimizer = self.optimizers()
-            optimizer.zero_grad()
-      
+            #optimizer = self.optimizers()
+            #optimizer.zero_grad()
+            s_optimizer, c_optimizer = self.optimizers()
+            s_optimizer.zero_grad()
+            c_optimizer.zero_grad()
             # ---- data prepare ----
             images = features.float()
             gts = masks
@@ -345,9 +367,12 @@ class SegmentCyst(pl.LightningModule):
 
             self.manual_backward(loss)
 
-            self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
-
-            optimizer.step()
+            #self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+            self.clip_gradients(s_optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+            self.clip_gradients(c_optimizer,gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+            
+            c_optimizer.step()
+            s_optimizer.step()
 
             # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
             if batch_idx % 5 == 0:
@@ -360,6 +385,8 @@ class SegmentCyst(pl.LightningModule):
         # scheduler step after entire batch (after for loop on rates for each batch)
         # sch = self.lr_schedulers()
         # sch.step()
+        s_sch, c_sch = self.lr_schedulers()
+        c_sch.step()
 
         return {
                 "segmentation_loss": segmentation_loss,
