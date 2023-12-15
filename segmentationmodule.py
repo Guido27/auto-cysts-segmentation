@@ -209,9 +209,9 @@ class SegmentCyst(pl.LightningModule):
         Path(self.refined_results_folder).mkdir(parents=True, exist_ok=True)
         self.epoch_start_time.append(time())
 
-    def get_lr(self):
-        optimizer = self.optimizers()
-        for param_group in optimizer.param_groups:
+    def get_segmentation_lr(self):
+        s_optimizer, c_optimizer = self.optimizers() # optimizer = self.optimizers()
+        for param_group in s_optimizer.param_groups: # for param_group in optimizer.param_group
             return param_group["lr"]
         
     def on_train_epoch_end(self):
@@ -222,7 +222,7 @@ class SegmentCyst(pl.LightningModule):
         # TODO uppdate scheduler of segmentation model here
         segmentation_scheduler, _ = self.lr_schedulers()
         segmentation_scheduler.step()
-        self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
+        self.log("segmentation_lr", self.get_segmentation_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
     def on_test_epoch_start(self):
         self.refined_results_folder_test = f"refined_images/test_results"
