@@ -343,9 +343,9 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,
                 )
 
-            # save first 2 images of current batch every 5 batch, not all batch because it would saturate colab memory
+            # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
             if batch_idx % 5 == 0:
-                save_images(masks[:2],logits[:2], refined_predictions[:2],f"batch_idx_{batch_idx}",Path(self.refined_results_folder))
+                save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx}",Path(self.refined_results_folder))
 
             self.manual_backward(loss)
 
