@@ -345,7 +345,8 @@ class SegmentCyst(pl.LightningModule):
 
             
             #TODO save predictions
-
+            if batch_idx % 2 == 0:
+                save_predictions
             self.manual_backward(loss)
 
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")

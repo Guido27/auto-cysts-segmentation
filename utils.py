@@ -607,23 +607,30 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
 
     return T
         
-# TODO update this function: save prediction using logits batch tensor output as input
-def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
-    
-    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
+#TODO testare
+def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
+    """Save images of predicted segmentation mask, gt mask and refined mask of entire batch.
+    Parameters
+    ----------
+    gt_masks: tensor of shape (B,1,S,S), where S is image and mask size, B batch size. Contains the ground truth masks associated with current batch images. Expect a mask of float values, no logits! 
+    segmented_masks: segmented prediction logits, tensor with same shape as gt_masks. Have to be logits!
+    refined_masks: refined segmented prediction logits, tensor with same shape as gt_masks Have to be logits!
+    image_name: name of the image file generated
+    path: Path object containing the path to save image
+    """
+    batch_size = segmented_masks.shape[0]
+    f, cols = plt.subplots(batch_size, 3, figsize=(15,20))
+    cols[0,0].set_title('GT masks')
+    cols[0,1].set_title("Predicted masks")
+    cols[0,2].set_title("Refined masks")
 
-    ax1.imshow(gt_mask*255, cmap='gray')
-    ax1.set_title('GT Mask')
-
-    ax2.imshow(segmented_mask, cmap= 'gray')
-    ax2.set_title("Segmented mask")
-
-    ax3.imshow(refined_mask, cmap='gray')
-    ax3.set_title("Refined with classifier") 
+    for (ax1, ax2, ax3), m, p, r in  zip(cols,gt_masks,segmented_masks,refined_masks):
+        ax1.imshow(m.squeeze().numpy().astype(np.uint8)*255, cmap='gray') 
+        ax2.imshow((p>.5).squeeze().numpy().astype(np.uint8), cmap= 'gray')
+        ax3.imshow((r>.5).squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
 
     plt.savefig(path / f'{image_name}.png')
     plt.close()
-
     
    
 
