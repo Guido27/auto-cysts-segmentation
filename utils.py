@@ -313,7 +313,28 @@ def split_dataset(hparams):
 ### Functions useful for classifier after segmentation model
 
 def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
-    #TODO write description 
+    """
+    This functions extract patches from RGB image accoding to predicted segmentation mask. Each extracted patch has an assigned label: 0 if the segmented area does't correspond with a segmentation area in gt mask,
+    1 if even a signle pixel in segmented area correspond to a segmented one in gt mask. Takes in input the entire batch segmented from segmentation model having shape (B,1,IMG_SIZE,IMG_SIZE), returns 
+    a list of all patches extracted in all images in batch with corresponding labels, coordinates and number of extracted patch for each image.
+
+    Parameters
+    ----------
+    - gt: ground truth masks in batch format, having shape (B,1,MASK_SIZE, MASK_SIZE)
+    - pred: predicted segmentation masks by segmentation model, shape is the same as gt. Pred contains logits, so to obtain the corresponding mask needs to be thresholded correctly.
+    - image: batch of images, shape is (B,3,IMG_SIZE,IMG_SIZE) 
+    
+    Return
+    ------
+    Tuple of (t,labels,coordinates,patch_each_image), where:
+    - t: tensor of shape (N, 3, p_size, p_size) containing all extracted patches according to predictions.
+    - labels: tensor of shape N which contains labels for each extracted patch in t. 
+    - coordinates: list of tuples (x,y,w,h) containing coordinates of extracted paches (which are the same in both predicted mask and image).
+    - patch_each_image: list containing the total number of extracted patches from each image in batch. A number for each image, so lenght will be equal to B 
+
+    Where B is batch size, N is number of extracted patches. Indexes are coherent, meaning that patch in t[X] has label labels[X] and it's coordinates are stored in tuple coordinates[X].
+    The total number of extracted patches from image with index 0 in batch will be stored in patch_each_image[0].
+    """ 
 
     t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32, requires_grad=True) #initialize return tensor of tensors
     coordinates = []

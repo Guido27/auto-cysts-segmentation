@@ -9,7 +9,6 @@ from utils import (
     binary_mean_iou,
     refine_predicted_masks,
     save_predictions,
-    extract_segmented_cysts_test_time,
     extract_patches
 )
 
