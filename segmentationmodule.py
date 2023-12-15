@@ -345,7 +345,7 @@ class SegmentCyst(pl.LightningModule):
 
             # save images every 5 batch
             if batch_idx % 5 == 0:
-                save_images(masks,logits, refined_predictions,f"batch_idx_{batch_idx}",self.refined_results_folder)
+                save_images(masks,logits, refined_predictions,f"batch_idx_{batch_idx}",Path(self.refined_results_folder))
 
             self.manual_backward(loss)
 
