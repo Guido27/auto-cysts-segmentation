@@ -8,7 +8,7 @@ from utils import (
     find_average,
     binary_mean_iou,
     refine_predicted_masks,
-    save_predictions,
+    save_images,
     extract_patches
 )
 
@@ -343,10 +343,10 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,
                 )
 
-            
-            #TODO save predictions
-            if batch_idx % 2 == 0:
-                save_predictions
+            # save images every 5 batch
+            if batch_idx % 5 == 0:
+                save_images(masks,logits, refined_predictions,f"batch_idx_{batch_idx}",self.refined_results_folder)
+
             self.manual_backward(loss)
 
             self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
