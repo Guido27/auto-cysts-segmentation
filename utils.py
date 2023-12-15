@@ -608,6 +608,7 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
     return T
         
 #TODO testare
+# funziona ma fa crashare colab
 def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     """Save images of predicted segmentation mask, gt mask and refined mask of entire batch.
     Parameters
