@@ -351,7 +351,7 @@ class SegmentCyst(pl.LightningModule):
 
             # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
             if batch_idx % 5 == 0:
-                save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx}",Path(self.refined_results_folder))
+                save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx:03}",Path(self.refined_results_folder))
 
             # scheduler step after each optimizer.step(), i.e. one for each batch in each resize
             # sch = self.lr_schedulers()
