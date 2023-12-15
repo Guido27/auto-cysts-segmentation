@@ -417,7 +417,7 @@ def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20
     #exclude always the first empty tensor declared with torch.empty
     return t[1:, :, :, :].cuda(), labels[1:], coordinates, patch_each_image
 
-# NOTE this function has been incorporated in extract_patches 
+# this function has been incorporated in extract_patches 
 def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
   """Extract wrong segmented areas in segmentation model predicted mask. 
   A segmented area in a prediction is considered wrong when the corresponding area in the ground truth segmentation mask is totally black.
@@ -468,7 +468,7 @@ def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default 
 
   return t[1:, :, :, :] ,w_cysts #exclude the first empty tensor declared with torch.empty
 
-# NOTE this function has been incorporated in extract_patches
+# this function has been incorporated in extract_patches
 def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
     """Extract from RGB image detected cysts. 
     In order to define if a segmented element is a true cyst the ground truth mask is used: if a segmented object in the prediction mask has even just a single
@@ -625,9 +625,9 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     cols[0,2].set_title("Refined masks")
 
     for (ax1, ax2, ax3), m, p, r in  zip(cols,gt_masks,segmented_masks,refined_masks):
-        ax1.imshow(m.squeeze().numpy().astype(np.uint8)*255, cmap='gray') 
-        ax2.imshow((p>.5).squeeze().numpy().astype(np.uint8), cmap= 'gray')
-        ax3.imshow((r>.5).squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
+        ax1.imshow(m.detach().squeeze().cpu().numpy().astype(np.uint8)*255, cmap='gray') 
+        ax2.imshow((p>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
+        ax3.imshow((r>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
 
     plt.savefig(path / f'{image_name}.png')
     plt.close()
