@@ -97,7 +97,7 @@ class SegmentCyst(pl.LightningModule):
 
     def configure_optimizers(self):
         #choosing a optimizer for classifier
-        c_optimizer = torch.optim.Adam(self.parameters() , lr = 1e-5)
+        c_optimizer = torch.optim.Adam(self.parameters() , lr = 1e-4)
         #choosing LR scheduler for classifier
         c_sch = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer = c_optimizer, T_0 = 10, T_mult = 2)
 
