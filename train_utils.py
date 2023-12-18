@@ -100,9 +100,12 @@ def train(args, hparams, name=None):
         logger=logger,
         precision=16,
     )
-            
+
+    # resume training?
+    ckpt_path = args.resume_train_from if args.resume_train_from is not None else None    
+    
     if not (success).exists():
-        trainer.fit(model, datamodule=data)
+        trainer.fit(model, datamodule=data, ckpt_path=ckpt_path)
         if logger:
             model.logger.experiment.log({"max_val_iou": model.max_val_iou})
 

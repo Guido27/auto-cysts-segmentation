@@ -312,6 +312,112 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
+def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
+    """
+    This functions extract patches from RGB image accoding to predicted segmentation mask. Each extracted patch has an assigned label: 0 if the segmented area does't correspond with a segmentation area in gt mask,
+    1 if even a signle pixel in segmented area correspond to a segmented one in gt mask. Takes in input the entire batch segmented from segmentation model having shape (B,1,IMG_SIZE,IMG_SIZE), returns 
+    a list of all patches extracted in all images in batch with corresponding labels, coordinates and number of extracted patch for each image.
+
+    Parameters
+    ----------
+    - gt: ground truth masks in batch format, having shape (B,1,MASK_SIZE, MASK_SIZE)
+    - pred: predicted segmentation masks by segmentation model, shape is the same as gt. Pred contains logits, so to obtain the corresponding mask needs to be thresholded correctly.
+    - image: batch of images, shape is (B,3,IMG_SIZE,IMG_SIZE) 
+    
+    Return
+    ------
+    Tuple of (t,labels,coordinates,patch_each_image), where:
+    - t: tensor of shape (N, 3, p_size, p_size) containing all extracted patches according to predictions.
+    - labels: tensor of shape N which contains labels for each extracted patch in t. 
+    - coordinates: list of tuples (x,y,w,h) containing coordinates of extracted paches (which are the same in both predicted mask and image).
+    - patch_each_image: list containing the total number of extracted patches from each image in batch. A number for each image, so lenght will be equal to B 
+
+    Where B is batch size, N is number of extracted patches. Indexes are coherent, meaning that patch in t[X] has label labels[X] and it's coordinates are stored in tuple coordinates[X].
+    The total number of extracted patches from image with index 0 in batch will be stored in patch_each_image[0].
+    """ 
+
+    t = torch.empty((1, 3, p_size, p_size), dtype=torch.float32) #initialize return tensor of tensors
+    coordinates = []
+    patch_each_image = [] #contains the total number of extracted patches from each image
+    labels = torch.empty((1)).type(torch.LongTensor).cuda() # LongTensor required dtype for CrossEntropyLoss
+    labels.requires_grad = False
+  
+    for m,p,i in zip(gt, pred, image):
+      # m GT mask, i image, p segmentation predictions from model  
+      m = m.detach().squeeze().cpu().numpy().astype(np.uint8)
+      predicted = (p>0.5).detach().squeeze().cpu().numpy().astype(np.uint8) # get segmentation model predicted mask from current predicted logits
+      i = i.detach().permute(1, 2, 0).cpu().numpy() # permute image as expected from following code
+      
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+      #### compute NEGATIVE PATCHES for current image
+      negative_counter = 0  
+      gt_contours, _ = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      pred_contours, _ = cv2.findContours(predicted, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)    
+      gt_contours = tuple([c for c in gt_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
+      pred_contours = tuple([c for c in pred_contours if c.size > 4 and cv2.contourArea(c)>cutoff])
+      pred_seps = tuple([csr_matrix(cv2.fillPoly(np.zeros_like(m), pts=[c], color=(1))) for c in pred_contours])
+      sparse_gt = csr_matrix(m)
+      for single_pred, c in zip(pred_seps, pred_contours):
+          if not single_pred.multiply(sparse_gt).count_nonzero(): # wrong cyst
+            # add coordinates to list of coordinates
+            x,y,w,h = cv2.boundingRect(c)
+            coordinates.append((x,y,w,h)) 
+            #extract patch and save in t
+            p = padding_default 
+            while True:
+              crop = i[(y-p):(y+h+p), (x-p):(x+w+p)]
+              if (crop.shape[0] != 0 and crop.shape[1] != 0):
+                break
+              else:
+                 p = p-1    
+            resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+            t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
+            negative_counter = negative_counter + 1 
+      # compute labels for extracted negative patches
+      labels = torch.cat((labels,torch.zeros((negative_counter)).type(torch.LongTensor).cuda()))    
+      
+      # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+      
+      #### compute POSITIVE PATCHES for current image
+      positive_counter = 0
+      #threshold predicted mask in order to extract contours of cysts
+      _, thresh = cv2.threshold(predicted*255, 127, 255, 0) #mask * 255 because threshold expects to have integer values between 0 and 255
+      # find contours of segmented areas in thresholded image
+      contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+      #iterate over segmented areas contours to find ones with cysts in it
+      for k in range(len(contours)):
+    
+        cnt = contours[k]
+        x,y,w,h = cv2.boundingRect(cnt)
+
+        # if a segmented area has an intersection with a segmented portion in gt mask: extract it (with padding) as positive patch...
+        if m[(y):(y+h), (x):(x+w)].any():  
+          # ... and add coordinates to coordinates list
+          coordinates.append((x,y,w,h))
+          # avoid that cysts with no space for padding cause errors: get cyst with lower padding
+          p = padding_default
+          while True:
+            crop = i[(y-p):(y+h+p), (x-p):(x+w+p)]
+            if crop.shape[0] != 0 and crop.shape[1] != 0:
+              break
+            else:
+               p = p-1  
+          resized = cv2.resize(crop, (p_size,p_size), interpolation = cv2.INTER_CUBIC) # resize cropped portion
+          t = torch.cat((t,image_to_tensor(resized).unsqueeze(0)), 0)
+          positive_counter = positive_counter + 1
+    
+      # compute labels for extracted positive patches
+      labels = torch.cat((labels,torch.ones((positive_counter)).type(torch.LongTensor).cuda()))
+    
+      # compute total number of extracted patches from current image and add it to list
+      patch_each_image.append(positive_counter + negative_counter)
+
+    #exclude always the first empty tensor declared with torch.empty
+    return t[1:, :, :, :].cuda(), labels[1:], coordinates, patch_each_image
+
+# this function has been incorporated in extract_patches 
 def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
   """Extract wrong segmented areas in segmentation model predicted mask. 
   A segmented area in a prediction is considered wrong when the corresponding area in the ground truth segmentation mask is totally black.
@@ -362,6 +468,7 @@ def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default 
 
   return t[1:, :, :, :] ,w_cysts #exclude the first empty tensor declared with torch.empty
 
+# this function has been incorporated in extract_patches
 def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
     """Extract from RGB image detected cysts. 
     In order to define if a segmented element is a true cyst the ground truth mask is used: if a segmented object in the prediction mask has even just a single
@@ -453,42 +560,89 @@ def extract_segmented_cysts_test_time(prediction, image, p_size = 64, padding_de
 
     return t[1:, :, :, :],l #exclude the first empty tensor declared with torch.empty in t
 
-def refine_mask(prediction, coordinates):
-    """Refine segmentation prediction, erase segmented cysts in prediction according to coordinates passed.
-    
+def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels):
+    """
+    Info
+    ----
+    Function that refine predictions in current batch performed by segmentation model.
+
     Parameters
     ----------
-    prediction: logits from segmentation model that have to be refined
-    coordinates: tensor containing coordinates of portion of image to erase (turn it black)
-    
+    logits: logits predicted from segmentation model which receive the entire batch in input and output predictions of same shape. Shape is (B,1,1024,1024) where B is Batch Size.
+    coordinates: list of N coordinates, each one is associated with a patch. Represents the coordinates of patches in both image and predicted mask from segmentation model
+    patch_each_image: List of lenght equal to batch size, contains in each position the number of patches extracted from each batch image. For example z[3] contains the total number of patches extracted from image/logit of index 3 in current batch.
+    predicted_labels: tensor of shape (N) containing predictions over each patch from classifier. 1 if "Cyst" 0 if "Not Cyst"   
     Return
     ------
-    refined prediction: tensor, copy of the original one, with deleted segmented cysts according to coordinates passed
-    """
-
-    # prediction -> requiresGrad is True, in place operation have to be replaced with not-in-place operation i.e make a copy and edit it
-    # TODO but is it correct making copies? 
-    refined_prediction = prediction.detach().clone()
-    for (x,y,w,h) in coordinates:
-        refined_prediction[0,(y):(y+h), (x):(x+w)] = torch.zeros((1, h, w)) 
-    return refined_prediction
-        
-def save_predictions(gt_mask, segmented_mask, refined_mask, image_name, path):
+    T: tensor of shape (logits.shape) which contains refined predictions logits according to patches classification performed by classifier: patches classified as negative are removed from predicted logits  
+    """ 
+    T = torch.empty((logits.shape)).cuda()
+    min_index = 0 #set first min_index to -1, min_index is the index of     
     
-    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
+    for index in range(logits.shape[0]):
+        
+        #get current logit
+        current_prediction = logits[index].detach().clone()   
+        # get number of extracted patches from current prediction
+        max_index = patch_each_image[index]   
+        # get classifier predictions of patches extracted from current prediction as tensor to exploit indexing
+        p = predicted_labels[min_index:min_index+max_index]  
+        # get coordinates of patches in p, also here as tensor to exploit indexing
+        c = torch.as_tensor(coordinates[min_index:min_index+max_index]).cuda() # cuda because p will be on GPU
+        # keep only coordinates of patches classified as not cysts from classifier 
+        c = c[p==0]  
+        # compute mask of ones with shape equal to current_prediction and set to 0 sections overlapping patches predicted as false
+        erasing_mask = torch.ones(current_prediction.shape).cuda()
+        erasing_mask.requires_grad = False # debug
+        for c_tensor in c:
+            # c_tensor has 4 elements: [x,y,w,h]
+            x = int(c_tensor[0])
+            y = int(c_tensor[1])
+            w = int(c_tensor[2])
+            h = int(c_tensor[3])
+            erasing_mask[0, (y):(y+h), (x):(x+w)] = torch.zeros((1,h,w))    
+        # refine mask erasing patches predicted as false with erasing_mask matrix multiplication and save computed refined mask in T (T[index] will contain refined version of logits[index])
+        T[index] = current_prediction*erasing_mask    
+        #update min_index
+        min_index = max_index 
 
-    ax1.imshow(gt_mask*255, cmap='gray')
-    ax1.set_title('GT Mask')
+    return T
+        
+#TODO testare
+# funziona ma fa crashare colab
+def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
+    """Save images of predicted segmentation mask, gt mask and refined mask of entire batch.
+    Parameters
+    ----------
+    gt_masks: tensor of shape (B,1,S,S), where S is image and mask size, B batch size. Contains the ground truth masks associated with current batch images. Expect a mask of float values, no logits! 
+    segmented_masks: segmented prediction logits, tensor with same shape as gt_masks. Have to be logits!
+    refined_masks: refined segmented prediction logits, tensor with same shape as gt_masks Have to be logits!
+    image_name: name of the image file generated
+    path: Path object containing the path to save image
+    """
+    number_of_images = segmented_masks.shape[0]
+    
+    if(number_of_images > 1):
+        f, cols = plt.subplots(number_of_images, 3, figsize=(15,20))
+        cols[0,0].set_title('GT masks')
+        cols[0,1].set_title("Predicted masks")
+        cols[0,2].set_title("Refined masks")
+        for (ax1, ax2, ax3), m, p, r in  zip(cols,gt_masks,segmented_masks,refined_masks):
+            ax1.imshow(m.detach().squeeze().cpu().numpy().astype(np.uint8)*255, cmap='gray') 
+            ax2.imshow((p>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
+            ax3.imshow((r>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
+    else:
+        # only one image has been passed
+        f, cols = plt.subplots(number_of_images, 3, figsize=(20,10))
+        cols[0].set_title('GT masks')
+        cols[1].set_title("Predicted masks")
+        cols[2].set_title("Refined masks")
+        cols[0].imshow(gt_masks.detach().squeeze().cpu().numpy().astype(np.uint8)*255, cmap='gray') 
+        cols[1].imshow((segmented_masks>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap= 'gray')
+        cols[2].imshow((refined_masks>.5).detach().squeeze().cpu().numpy().astype(np.uint8), cmap='gray')
 
-    ax2.imshow(segmented_mask, cmap= 'gray')
-    ax2.set_title("Segmented mask")
-
-    ax3.imshow(refined_mask, cmap='gray')
-    ax3.set_title("Refined with classifier") 
-
-    plt.savefig(path / f'{image_name}.png')
+    f.savefig(path / f'{image_name}.png')
     plt.close()
-
     
    
 
