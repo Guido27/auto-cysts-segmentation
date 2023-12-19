@@ -99,10 +99,10 @@ val_aug:
     p: 1
     transforms:
       - __class_fulllname__: albumentations.augmentations.geometric.resize.Resize
-          always_apply: True
-          height: 512
-          width: 512
-          p: 1
+        always_apply: True
+        height: 512
+        width: 512
+        p: 1
       - __class_fullname__: albumentations.augmentations.transforms.RandomBrightnessContrast
         p: 1.0
       - __class_fullname__: albumentations.augmentations.transforms.RandomGamma
