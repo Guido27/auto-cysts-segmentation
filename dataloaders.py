@@ -47,9 +47,6 @@ class SegmentationDataset(Dataset):
 
         mask = torch.from_numpy(mask)
 
-        print(image.shape) # debug
-        print(mask.shape)  #debug
-
         return {
             "image_id": image_path.stem,
             "features": image_to_tensor(image),
