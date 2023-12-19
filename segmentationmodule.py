@@ -173,12 +173,7 @@ class SegmentCyst(pl.LightningModule):
             loss1 = self.loss(lateral_map_1, masks)
             loss = loss5 +loss3 + loss2 + loss1
             
-            res = lateral_map_5
-            #res = F.upsample(res, size=masks.shape, mode='bilinear', align_corners=False)
-            #res = res.sigmoid().data.cpu().numpy().squeeze()
-            #res = (res - res.min()) / (res.max() - res.min() + 1e-8)
-
-            logits = res
+            logits = lateral_map_5
 
         else:
             logits = self.forward(features)
@@ -212,22 +207,6 @@ class SegmentCyst(pl.LightningModule):
 
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
-
-    # def on_train_end(self):
-    #     import matplotlib.pyplot as plt
-    #     fig, ax = plt.subplots(2, 1, figsize=(6, 10))
-    #     self.train_metrics['iou'].plot(ax=ax[0])
-    #     self.val_metrics['iou'].plot(ax=ax[0])
-    #     self.val_metrics['dice'].plot(ax=ax[0])
-    #     ax[0].legend()
-
-    #     self.epoch_start_time = np.array(self.epoch_start_time) - self.epoch_start_time[0]
-    #     ax[1].plot(self.epoch_start_time, label='Epoch duration')
-    #     ax[1].set_xlabel('Epoch')
-    #     ax[1].set_ylabel('Time [s]')
-    #     ax[1].legend()
-
-    #     fig.savefig(self.hparams.checkpoint_callback['dirpath'] / 'metrics.png')
 
     def test_step(self, batch, batch_id):
         features = batch["features"]
