@@ -59,7 +59,7 @@ train_aug:
     keypoint_params: null
     p: 1
     transforms:
-      - __class_fulllname__: albumentations.augmentations.geometric.resize.Resize
+      - __class_fullname__: albumentations.augmentations.geometric.resize.Resize
         always_apply: True
         height: 512
         width: 512
@@ -98,7 +98,7 @@ val_aug:
     keypoint_params: null
     p: 1
     transforms:
-      - __class_fulllname__: albumentations.augmentations.geometric.resize.Resize
+      - __class_fullname__: albumentations.augmentations.geometric.resize.Resize
         always_apply: True
         height: 512
         width: 512
@@ -131,7 +131,7 @@ test_aug:
     keypoint_params: null
     p: 1
     transforms:
-      - __class_fulllname__: albumentations.augmentations.geometric.resize.Resize
+      - __class_fullname__: albumentations.augmentations.geometric.resize.Resize
         always_apply: True
         height: 512
         width: 512
