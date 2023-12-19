@@ -8,7 +8,7 @@ from zipfile import ZipFile
 from easydict import EasyDict as ed
 import pandas as pd
 from sklearn.utils import shuffle
-from sklearn.model_selection import StratifiedKFold, GroupKFold
+from sklearn.model_selection import train_test_split
 import cv2
 import re
 
@@ -245,26 +245,22 @@ def init_training(args, hparams, name, tiling=False):
 
 def split_dataset(hparams):
     samples = get_samples(hparams["image_path"], hparams["mask_path"])
-    print(samples[0])
-    
+
     names = [file[0].stem for file in samples]
 
     df = pd.DataFrame({"filename": names,})
 
-    #print(df)
+    train_val_set, test_set = train_test_split(names, test_size=.2, random_state=42) # split dataset in train+validation set and test set
+    train_set, val_set = train_test_split(train_val_set, test_size=.2, random_state=42) # split train+validation set in train and validation sets
     
+    print(type(train_set))
+    print(train_set)
+
+    #train_samp = [tuple(x) for x in np.array(samples)[train_idx]]
+    #val_samp = [tuple(x) for x in np.array(samples)[val_idx]]
     
         
-    if strat_nogroups:
-        skf = StratifiedKFold(n_splits=5, random_state=hparams["seed"], shuffle=True)
-        train_idx, val_idx = list(skf.split(df.filename, df.te))[k]
-    else:
-        df, samples = shuffle(df, samples, random_state=hparams["seed"])
-        gkf = GroupKFold(n_splits=5)
-        train_idx, val_idx = list(gkf.split(df.filename, groups=df.te))[k]
     
-    train_samp = [tuple(x) for x in np.array(samples)[train_idx]]
-    val_samp = [tuple(x) for x in np.array(samples)[val_idx]]
     
     return {
         "train": train_samp,
