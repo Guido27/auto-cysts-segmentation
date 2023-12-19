@@ -245,12 +245,12 @@ def init_training(args, hparams, name, tiling=False):
 
 def split_dataset(hparams):
     samples = get_samples(hparams["image_path"], hparams["mask_path"])
-    
+    print(type(samples))
     names = [file[0].stem for file in samples]
 
     df = pd.DataFrame({"filename": names,})
 
-    print(df)
+    #print(df)
     
     
         
