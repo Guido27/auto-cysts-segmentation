@@ -3,8 +3,8 @@ seed: 1989
 
 num_workers: 2
 experiment_name: "training"
-image_path: "/content/Kvasir-SEG/images"
-mask_path: "/content/Kvasir-SEG/masks"
+image_path: "Kvasir-SEG/images"
+mask_path: "Kvasir-SEG/masks"
 val_split: 0.2
 
 model:
