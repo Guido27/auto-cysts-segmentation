@@ -275,7 +275,7 @@ def split_dataset(hparams):
         #"tube": [u[2] for u in unpack],
     })
 #     df["te"] = df.treatment + '_' + df.exp.astype(str)
-    df["te"] = (df.treatment + '_' + df.exp.astype(str) + '_' + df.tube.astype(str)).astype('category')
+    #df["te"] = (df.treatment + '_' + df.exp.astype(str) + '_' + df.tube.astype(str)).astype('category')
     
     if test_exp is not None or leave_one_out is not None:
         if leave_one_out is not None:
