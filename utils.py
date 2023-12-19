@@ -267,12 +267,12 @@ def split_dataset(hparams):
     
     names = [file[0].stem for file in samples]
 
-    unpack = [simplify_names(name) for name in names]
+    unpack = names #[simplify_names(name) for name in names], no names to simplify in this dataset
     df = pd.DataFrame({
         "filename": names,
-        "treatment": [u[1] for u in unpack],
-        "exp": [date_to_exp(u[0]) for u in unpack],
-        "tube": [u[2] for u in unpack],
+        #"treatment": [u[1] for u in unpack],
+        #"exp": [date_to_exp(u[0]) for u in unpack],
+        #"tube": [u[2] for u in unpack],
     })
 #     df["te"] = df.treatment + '_' + df.exp.astype(str)
     df["te"] = (df.treatment + '_' + df.exp.astype(str) + '_' + df.tube.astype(str)).astype('category')
