@@ -36,9 +36,6 @@ class SegmentationDataset(Dataset):
         image = imread(image_path)
         mask = imread(mask_path)
 
-        print(image.shape) # debug
-        print(mask.shape)  #debug
-
         if self.noG: # TODO: What if done after the augmentation the image?
             image[:, :, 1] = 0
 
@@ -49,6 +46,9 @@ class SegmentationDataset(Dataset):
         mask = (mask > 0).astype(np.uint8)
 
         mask = torch.from_numpy(mask)
+
+        print(image.shape) # debug
+        print(mask.shape)  #debug
 
         return {
             "image_id": image_path.stem,
