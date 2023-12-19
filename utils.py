@@ -250,7 +250,7 @@ def split_dataset(hparams):
 
     df = pd.DataFrame({"filename": names,})
 
-    train_val_set, test_set = train_test_split(names, test_size=.2, random_state=42) # split dataset in train+validation set and test set
+    train_val_set, test_set = train_test_split(samples, test_size=.2, random_state=42) # split dataset in train+validation set and test set
     train_set, val_set = train_test_split(train_val_set, test_size=.2, random_state=42) # split train+validation set in train and validation sets
     
     print(type(train_set))
