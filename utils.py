@@ -253,15 +253,10 @@ def split_dataset(hparams):
     train_val_set, test_set = train_test_split(samples, test_size=.2, random_state=42) # split dataset in train+validation set and test set
     train_set, val_set = train_test_split(train_val_set, test_size=.2, random_state=42) # split train+validation set in train and validation sets
     
-    print(type(train_set))
-    print(train_set)
-
-    #train_samp = [tuple(x) for x in np.array(samples)[train_idx]]
-    #val_samp = [tuple(x) for x in np.array(samples)[val_idx]]
-    
+    train_samp = train_set
+    val_samp = val_set
+    test_samp = test_set
         
-    
-    
     return {
         "train": train_samp,
         "valid": val_samp,
