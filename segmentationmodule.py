@@ -325,8 +325,8 @@ class SegmentCyst(pl.LightningModule):
             #    tot_patches = len(detected_coordinates) + len(wrong_coordinates)
             #    patch_each_image.append(tot_patches)
 
-            refine_with_unfolded_patches(gts,logits,features)
-            
+            refine_with_unfolded_patches(gts,logits,images)
+
             patches, labels, coordinates, patch_each_image = extract_patches(gts, logits,features)
     
             # compute classifier predictions/logits
