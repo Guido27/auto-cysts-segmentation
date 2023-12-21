@@ -647,7 +647,7 @@ def refine_with_unfolded_patches(gt, pred, image, size=128, stride = 128):
     # pred batch of segmentation model predictions
     # batch of rgb images
     # all with dimension of 768 x 768
-    
+    print(image.shape)
     channels = image.shape[1] # RGB => 3
 
     patches = image.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
