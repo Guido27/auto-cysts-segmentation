@@ -608,8 +608,6 @@ def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels)
 
     return T
         
-#TODO testare
-# funziona ma fa crashare colab
 def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     """Save images of predicted segmentation mask, gt mask and refined mask of entire batch.
     Parameters
@@ -643,7 +641,21 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
 
     f.savefig(path / f'{image_name}.png')
     plt.close()
+
+def refine_with_unfolded_patches(gt, pred, image, size=128, stride = 128):
+    # gt batch of gt masks
+    # pred batch of segmentation model predictions
+    # batch of rgb images
+    # all with dimension of 768 x 768
+
+    patches = image.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
+    unfold_shape = patches.size()
+    patches = patches.view(unfold_shape)
+    print(patches.shape) #debug
     
+
+
+
    
 
 
