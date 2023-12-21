@@ -9,7 +9,8 @@ from utils import (
     binary_mean_iou,
     refine_predicted_masks,
     save_images,
-    extract_patches
+    extract_patches,
+    refine_with_unfolded_patches
 )
 
 from PIL import Image
@@ -324,6 +325,7 @@ class SegmentCyst(pl.LightningModule):
             #    tot_patches = len(detected_coordinates) + len(wrong_coordinates)
             #    patch_each_image.append(tot_patches)
 
+            refine_with_unfolded_patches(gts,logits,features)
             
             patches, labels, coordinates, patch_each_image = extract_patches(gts, logits,features)
     
