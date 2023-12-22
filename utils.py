@@ -663,6 +663,7 @@ def unfold_patches(gt,images, size=128, stride = 128, test = False):
     gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 3, 128, 128) 
     r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2)
     labels = torch.where(r>200,1,0) #NOTE r > x dove x é il numero minimo di pixel che vogliamo uguale a 1 per decretare una patch come positiva! se é 0 alcune patch che magari hanno 1 solo pixel potrebbero essere considerate come positive 
+    labels = labels.view(labels.shape[0]) # reshape tensor to shape [N,] as expected from CrossEntropyLoss
     print(images_patches.shape, labels.shape) #debug
     return images_patches, labels
     
