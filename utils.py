@@ -642,23 +642,31 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     f.savefig(path / f'{image_name}.png')
     plt.close()
 
-def refine_with_unfolded_patches(gt, pred, images, size=128, stride = 128):
+def unfold_patches(gt,images, size=128, stride = 128, test = False):
+    # TODO documentazione
+
     # gt batch of gt masks
-    # pred batch of segmentation model predictions
     # batch of rgb images
     # all with dimension of 768 x 768
 
-    channels = images.shape[1] # RGB => 3
 
+    channels = images.shape[1] # RGB => 3
     #unfold RGB images in patches
     images_patches = images.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
-    unfold_shape = images_patches.size()
+    unfold_shape = images_patches.size() # TODO capire se serve 
     images_patches = images_patches.contiguous().view(-1,channels,size,size) # shape will be (36*Batch_size, 3, 128, 128)
+    
+    if test: return images_patches # avoid labels computation because not required, return only unfolded RGB images (patches)
     
     #unfold in the same way gt masks in order to produce classification labels
     gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
-    gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1 
-    print(gt.shape,images.shape,gt_patches.shape,images_patches.shape) #debug
+    gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 3, 128, 128) 
+    r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2)
+    labels = torch.where(r>200,1,0) #NOTE r > x dove x é il numero minimo di pixel che vogliamo uguale a 1 per decretare una patch come positiva! se é 0 alcune patch che magari hanno 1 solo pixel potrebbero essere considerate come positive 
+    print(images_patches.shape, labels.shape) #debug
+    return images_patches, labels
+    
+
 
 
 
