@@ -642,19 +642,23 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     f.savefig(path / f'{image_name}.png')
     plt.close()
 
-def refine_with_unfolded_patches(gt, pred, image, size=128, stride = 128):
+def refine_with_unfolded_patches(gt, pred, images, size=128, stride = 128):
     # gt batch of gt masks
     # pred batch of segmentation model predictions
     # batch of rgb images
     # all with dimension of 768 x 768
-    print(image.shape)
-    channels = image.shape[1] # RGB => 3
 
-    patches = image.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
-    unfold_shape = patches.size()
-    patches = patches.contiguous().view(-1,channels,size,size)
-    print(patches.shape) #debug
+    channels = images.shape[1] # RGB => 3
+
+    #unfold RGB images in patches
+    images_patches = images.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
+    unfold_shape = images_patches.size()
+    images_patches = images_patches.contiguous().view(-1,channels,size,size) # shape will be (36*Batch_size, 3, 128, 128)
     
+    #unfold in the same way gt masks in order to produce classification labels
+    gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
+    gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1 
+    print(gt.shape,images.shape,gt_patches.shape,images_patches.shape) #debug
 
 
 
