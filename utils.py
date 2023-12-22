@@ -643,29 +643,39 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     plt.close()
 
 def unfold_patches(gt,images, size=128, stride = 128, test = False):
-    # TODO documentazione
-
-    # gt batch of gt masks
-    # batch of rgb images
-    # all with dimension of 768 x 768
-
-
+    """Compute patches of current batch RGB images using the unfold method. Patches have dimension "size", default is 128 because images in default settings have 768x768 dimension.
+    
+    Parameters
+    ----------
+    - gt: ground truth masks in batch format, having shape (B,1,MASK_SIZE, MASK_SIZE)
+    - image: batch of RGB images, shape is (B,3,IMG_SIZE,IMG_SIZE) 
+    - size: size of patches, default is 128
+    - stride: stride should be equal to size in order to avoid overlapping
+    - test: default False, if true means that this function has been called from test_step where labels are not required.
+    
+    Returns
+    -------
+    - images_patches: patches in unfolded view, shape is (N*Batch_size, 3, 128, 128) where N is the number of extracted patches from each image, in default settings is 36
+    - labels: tensor of shape (N*Batch_size), contains labels associated with each patch. Indexes are coherent, meaning that labels[X] is label of patch images_patches[X].
+    """
     channels = images.shape[1] # RGB => 3
     #unfold RGB images in patches
     images_patches = images.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
-    unfold_shape = images_patches.size() # TODO capire se serve 
-    images_patches = images_patches.contiguous().view(-1,channels,size,size) # shape will be (36*Batch_size, 3, 128, 128)
+    unfold_shape = images_patches.size() # TODO capire se serve per ricostruzione
+    images_patches = images_patches.contiguous().view(-1,channels,size,size) # reshape to (36*Batch_size, 3, 128, 128)
+
+    if test is False: 
+        #unfold in the same way gt masks in order to produce classification labels
+        gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
+        gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
+        r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
+        labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
+        labels = labels.view(labels.shape[0]) # reshape tensor to shape [N,] as expected from CrossEntropyLoss
+        return images_patches, labels
+    else:
+        # call from test_step, avoid label computation because not required
+        return images_patches
     
-    if test: return images_patches # avoid labels computation because not required, return only unfolded RGB images (patches)
-    
-    #unfold in the same way gt masks in order to produce classification labels
-    gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
-    gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 3, 128, 128) 
-    r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2)
-    labels = torch.where(r>200,1,0) #NOTE r > x dove x é il numero minimo di pixel che vogliamo uguale a 1 per decretare una patch come positiva! se é 0 alcune patch che magari hanno 1 solo pixel potrebbero essere considerate come positive 
-    labels = labels.view(labels.shape[0]) # reshape tensor to shape [N,] as expected from CrossEntropyLoss
-    print(images_patches.shape, labels.shape) #debug
-    return images_patches, labels
     
 
 
