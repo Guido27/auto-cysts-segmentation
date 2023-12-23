@@ -167,6 +167,11 @@ def load_mask(path):
     im = str(path)
     return (cv2.imread(im, cv2.IMREAD_GRAYSCALE) > 0).astype(np.uint8)
 
+def load_mask_resized(path, size=768):
+    im = str(path)
+    mask = (cv2.imread(im, cv2.IMREAD_GRAYSCALE) > 0).astype(np.uint8)
+    return cv2.resize(mask, (size,size), interpolation = cv2.INTER_AREA)
+
 
 def binary_mean_iou(logits: torch.Tensor, targets: torch.Tensor, EPSILON = 1e-15) -> torch.Tensor:
     output = (logits > 0.5).int()

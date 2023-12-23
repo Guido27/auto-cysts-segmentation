@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics import precision_score, recall_score, f1_score, jaccard_score, confusion_matrix
 import argparse
 
-from utils import simplify_names, load_mask, load_rgb
+from utils import simplify_names, load_mask, load_rgb, load_mask_resized
 
 def get_args():
     parser = argparse.ArgumentParser(description='CV with selected experiment as test set and train/val stratified from the others')
@@ -149,7 +149,8 @@ class Evaluator():
                 
             # dict of cysts as {'state': state, 'areas': [AREA_real, AREA_pred]}
             assert (self.maskP / f'{name}.png').exists(), self.maskP / f'{name}.png'
-            gt = load_mask(self.maskP / f'{name}.png')
+            #gt = load_mask(self.maskP / f'{name}.png')
+            gt = load_mask_resized(self.maskP / f'{name}.png') # make gt consistent with pred which is 768x768 while gt is 1024x1024 
             pred_img = load_mask(pred)
             
             cysts, IM_s['total_real'], IM_s['total_pred'] = missed_wrong_cysts_dict(gt, pred_img, cutoff=0)
