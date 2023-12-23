@@ -661,7 +661,6 @@ def unfold_patches(gt,images, size=128, stride = 128, test = False):
     channels = images.shape[1] # RGB => 3
     #unfold RGB images in patches
     images_patches = images.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
-    unfold_shape = images_patches.size() # TODO capire se serve per ricostruzione
     images_patches = images_patches.contiguous().view(-1,channels,size,size) # reshape to (36*Batch_size, 3, 128, 128)
 
     if test is False: 
@@ -677,7 +676,17 @@ def unfold_patches(gt,images, size=128, stride = 128, test = False):
         return images_patches
     
 def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, channels = 1):
-    """Refine predicted segmentation masks with labels computed from classifier over RGB images."""
+    """Refine predicted segmentation masks with labels computed from classifier over RGB images.
+    
+    Parameters
+    ----------
+    predictions: tensor with shape [B,1,768,768] where B batch size. Contains segmentation model predicted masks over batch images.
+    labels: tensor of shape [N,] contains labels (0/1) predicted from classifier over each patch extracted from RGB images in current batch.
+    
+    Return
+    ------
+    refined predictions: Tensor of shape [B,1,768,768]. According to classifier predictions, segmentation masks are refined setting to 0 areas which corresponds to patches classified as 0 (not containing cysts) from classifier.
+    """
     # TODO completare documentazione
     # predictions: tensore con shape [B,1,768,768] dove B batch size
     # labels: tensore di shape [N,] contenente le labels (0 e 1) predette dal classificatore su ciascuna patch dell'immgine RGB

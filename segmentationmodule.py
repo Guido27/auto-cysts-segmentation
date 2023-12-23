@@ -96,8 +96,6 @@ class SegmentCyst(pl.LightningModule):
         else:
             return self.model(batch)
 
-    # TODO provare ad usare optimizer e/o scheduler diversi per classificatore e segmentation model
-
     def configure_optimizers(self):
         #choosing a optimizer for classifier
         c_optimizer = torch.optim.Adam(self.parameters() , lr = 1e-4)
@@ -220,7 +218,6 @@ class SegmentCyst(pl.LightningModule):
         #  scheduler.step() after each train epoch
         #sch = self.lr_schedulers()
         #sch.step()
-        # TODO uppdate scheduler of segmentation model here
         segmentation_scheduler, _ = self.lr_schedulers()
         segmentation_scheduler.step()
         self.log("segmentation_lr", self.get_segmentation_lr(), on_step=False, on_epoch=True, prog_bar=True)
@@ -299,7 +296,7 @@ class SegmentCyst(pl.LightningModule):
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
-            # TODO refine predictions
+            # refine predictions
             refined_predictions = refine_predictions_unfolding(logits, predicted_labels)
             #refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
 
