@@ -431,7 +431,7 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,)
        
         for metric_name, metric in self.val_metrics.items():
-            metric(refined_predictions, masks.int()) # compute metrics on refined masks
+            metric(refined_predictions, gts.int()) # compute metrics on refined masks
             self.log(f"val_{metric_name}", metric, on_step=False, on_epoch=True)
 
 
@@ -524,5 +524,5 @@ class SegmentCyst(pl.LightningModule):
 
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
-            metric(refined_predictions, masks.int())
+            metric(refined_predictions, gts.int())
             self.log(f"test_{metric_name}", metric, on_step=True, on_epoch=True)
