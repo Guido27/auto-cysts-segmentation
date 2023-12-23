@@ -681,7 +681,7 @@ def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, 
     # TODO completare documentazione
     # predictions: tensore con shape [B,1,768,768] dove B batch size
     # labels: tensore di shape [N,] contenente le labels (0 e 1) predette dal classificatore su ciascuna patch dell'immgine RGB
-
+    batch_size = predictions.shape[0]
     u_pred = predictions.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) # unfold predicted masks
     unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)
     
@@ -698,8 +698,8 @@ def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, 
     output_h = unfold_shape[2] * unfold_shape[5]
     output_w = unfold_shape[3] * unfold_shape[6]
     rec = rec.permute(0, 1, 4, 2, 6, 3, 5).contiguous() # permute to keep original orientation of mask
-    rec = rec.view(4, output_c, output_h, output_w) # reshape as originally in batch format
-    
+    rec = rec.view(batch_size, output_c, output_h, output_w) # reshape as originally in batch format
+
     return rec #shape is [B,1,768,768] where B: batch size
 
    
