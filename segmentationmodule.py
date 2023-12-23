@@ -10,7 +10,8 @@ from utils import (
     refine_predicted_masks,
     save_images,
     extract_patches,
-    unfold_patches
+    unfold_patches,
+    refine_predictions_unfolding
 )
 
 from PIL import Image
@@ -299,6 +300,7 @@ class SegmentCyst(pl.LightningModule):
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
             # TODO refine predictions
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels)
             #refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
 
             
@@ -314,15 +316,15 @@ class SegmentCyst(pl.LightningModule):
             )
 
             # passare la refined mask (logits) oppure (refined_mask > 0.5)? -> passare le logits, il thresholding lo fa gia la metric da sola
-            #for metric_name, metric in self.train_metrics.items():
-            #    metric(refined_predictions, gts.int())
-            #    self.log(
-            #        f"train_{metric_name}",
-            #        metric,
-            #        on_step=False,
-            #        on_epoch=True,
-            #        prog_bar=True,
-            #    )
+            for metric_name, metric in self.train_metrics.items():
+                metric(refined_predictions, gts.int())
+                self.log(
+                    f"train_{metric_name}",
+                    metric,
+                    on_step=False,
+                    on_epoch=True,
+                    prog_bar=True,
+                )
 
             self.manual_backward(loss)
 
@@ -344,8 +346,8 @@ class SegmentCyst(pl.LightningModule):
         c_sch.step()
 
         # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
-        #if batch_idx % 5 == 0:
-        #        save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx:03}",Path(self.refined_results_folder))
+        if batch_idx % 5 == 0:
+                save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx:03}",Path(self.refined_results_folder))
 
 
         return {

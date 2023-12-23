@@ -676,10 +676,31 @@ def unfold_patches(gt,images, size=128, stride = 128, test = False):
         # call from test_step, avoid label computation because not required
         return images_patches
     
+def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, channels = 1):
+    """Refine predicted segmentation masks with labels computed from classifier over RGB images."""
+    # TODO completare documentazione
+    # predictions: tensore con shape [B,1,768,768] dove B batch size
+    # labels: tensore di shape [N,] contenente le labels (0 e 1) predette dal classificatore su ciascuna patch dell'immgine RGB
+
+    u_pred = predictions.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) # unfold predicted masks
+    unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)
     
+    u_pred = u_pred.contiguous().view(-1,channels,size,size) # reshaping in order to muliply it with labels for refinement
+    labels = labels.reshape(labels.shape[0], 1 , 1, 1) # reshape labels in order to exploit broadcasting
 
+    # refine prediction: labels 1 means "should contain cysts" so predicted area is inaltered, 
+    # 0 means "here shouldn't be cysts" so predicted are is refined as black
+    refined_mask = u_pred * labels
 
-
+    # reconstruct batch shape after refinement
+    rec = refined_mask.view(unfold_shape)
+    output_c = unfold_shape[1] * unfold_shape[4]
+    output_h = unfold_shape[2] * unfold_shape[5]
+    output_w = unfold_shape[3] * unfold_shape[6]
+    rec = rec.permute(0, 1, 4, 2, 6, 3, 5).contiguous() # permute to keep original orientation of mask
+    rec = rec.view(4, output_c, output_h, output_w) # reshape as originally in batch format
+    
+    return rec #shape is [B,1,768,768] where B: batch size
 
    
 
