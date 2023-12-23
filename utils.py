@@ -687,9 +687,6 @@ def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, 
     ------
     refined predictions: Tensor of shape [B,1,768,768]. According to classifier predictions, segmentation masks are refined setting to 0 areas which corresponds to patches classified as 0 (not containing cysts) from classifier.
     """
-    # TODO completare documentazione
-    # predictions: tensore con shape [B,1,768,768] dove B batch size
-    # labels: tensore di shape [N,] contenente le labels (0 e 1) predette dal classificatore su ciascuna patch dell'immgine RGB
     batch_size = predictions.shape[0]
     u_pred = predictions.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) # unfold predicted masks
     unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)

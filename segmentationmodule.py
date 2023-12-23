@@ -55,7 +55,7 @@ class SegmentCyst(pl.LightningModule):
             self.val_images.mkdir(exist_ok=True, parents=True)
 
         self.loss = object_from_dict(hparams["loss"])
-        self.weight = torch.tensor([0.1, 2]) # class 0 2=0,1 and class 1 w=2
+        self.weight = torch.tensor([0.1, 2]) # class 0 2=0,1 and class 1 w=2 # TODO check if weights are right or compute them
         self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
 
         self.max_val_iou = 0
@@ -358,50 +358,69 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"]
         imgs_name = batch["image_id"]
 
-        if self.model_name in ["uacanet", "pranet"]:
-            logits = self.forward(features, masks)
-            loss = logits["loss"]
-            logits = logits["pred"]
+        # manual steps in order to perform multi-scale training
+        size_rates =[0.75] #[0.75, 1.25, 1]
+        for rate in size_rates:
+            # ---- data prepare ----
+            images = features.float()
+            gts = masks
+            images = Variable(images).cuda()
+            gts = Variable(gts).cuda()
+            # ---- rescale ----
+            images_dim = 1024  # original dimension of images 1024x1024
+            trainsize = int(round(images_dim * rate / 32) * 32)
+            if rate != 1:
+                images = F.upsample(
+                    images,
+                    size=(trainsize, trainsize),
+                    mode="bilinear",
+                    align_corners=True,
+                )
+                gts = F.upsample(
+                    gts,
+                    size=(trainsize, trainsize),
+                    mode="bilinear",
+                    align_corners=True,
+                )
 
-        # CaraNet
-        elif self.model_name in ["caranet"]:
-            lateral_map_5, lateral_map_3, lateral_map_2, lateral_map_1 = self.forward(
-                features
-            )
+            if self.model_name == "caranet":
+                (
+                    lateral_map_5,
+                    lateral_map_3,
+                    lateral_map_2,
+                    lateral_map_1,
+                ) = self.forward(images)
 
-            loss5 = self.loss(lateral_map_5, masks)
-            loss3 = self.loss(lateral_map_3, masks)
-            loss2 = self.loss(lateral_map_2, masks)
-            loss1 = self.loss(lateral_map_1, masks)
+                # compute segmentation loss
+                loss5 = self.loss(lateral_map_5, gts)
+                loss3 = self.loss(lateral_map_3, gts)
+                loss2 = self.loss(lateral_map_2, gts)
+                loss1 = self.loss(lateral_map_1, gts)
 
-            segmentation_loss = loss5 + loss3 + loss2 + loss1
-            logits = lateral_map_5
+                segmentation_loss = loss5 + loss3 + loss2 + loss1
+                logits = lateral_map_5
 
-        else:
-            logits = self.forward(features)
-            segmentation_loss = self.loss(logits, masks)
+            else:
+                logits = self.forward(images)
+                segmentation_loss = self.loss(logits, gts)
 
-
-        patches, labels, coordinates, patch_each_image = extract_patches(masks, logits, features)
+            patches, labels = unfold_patches(gts,images) # here labels are used only to compute validation loss
     
-        if patches.shape[0] != 0: 
-        # if segmentation model predicted something, classifier have to classify patches
-
             # compute classifier predictions/logits
-            classifier_predictions = self.classifier(patches) # pass patches, classifier_predictions has shape (N,2), contains logits/probabilities for each class
-
+            classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
+            
             # get predicted labels from classifier logits
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-            # refine predictions
-            refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
+          
+            # compute classifier loss over all patches in current batch
             classifier_loss = self.loss_classifier(classifier_predictions, labels)
-            loss = segmentation_loss + classifier_loss
-        else:
-            # no predictions from segmentation model, classifier have nothing to do and no mask have to be refined
-            refined_predictions = logits
-            classifier_loss = 0
-            loss = segmentation_loss
-        
+
+            # training loss
+            loss = segmentation_loss + classifier_loss # both computed over batch images and patches
+
+            # refine predictions
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels)
+
         # NOTE don't save predictions in val set for the moment 
 
         self.log_dict({"val_segmentation_loss": segmentation_loss,
@@ -431,19 +450,53 @@ class SegmentCyst(pl.LightningModule):
 
         timing = [time() - t0, features.shape[0]]
 
-        patches, _, coordinates, patch_each_image = extract_patches(masks, logits, features) #patches gt labels are useless in test step
+        size_rates =[0.75] #[0.75, 1.25, 1]
+        for rate in size_rates:
+            # ---- data prepare ----
+            images = features.float()
+            gts = masks
+            images = Variable(images).cuda()
+            gts = Variable(gts).cuda()
+            # ---- rescale ----
+            images_dim = 1024  # original dimension of images 1024x1024
+            trainsize = int(round(images_dim * rate / 32) * 32)
+            if rate != 1:
+                images = F.upsample(
+                    images,
+                    size=(trainsize, trainsize),
+                    mode="bilinear",
+                    align_corners=True,
+                )
+                gts = F.upsample(
+                    gts,
+                    size=(trainsize, trainsize),
+                    mode="bilinear",
+                    align_corners=True,
+                )
+
+            if self.model_name == "caranet":
+                (
+                    lateral_map_5,
+                    lateral_map_3,
+                    lateral_map_2,
+                    lateral_map_1,
+                ) = self.forward(images)
+
+                logits = lateral_map_5
+
+            else:
+                logits = self.forward(images)
+
+            patches = unfold_patches(gts,images, test=True) # here labels are used only to compute validation loss
     
-        if patches.shape[0] != 0:
-            # segmentation model predicted something, classifier have to classify patches
             # compute classifier predictions/logits
-            classifier_predictions = self.classifier(patches) # pass patches, classifier_predictions has shape (N,2), contains logits/probabilities for each class
+            classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
+            
             # get predicted labels from classifier logits
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+
             # refine predictions
-            refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
-        else:
-            # no predictions from segmentation model, classifier have nothing to do and no mask have to be refined
-            refined_predictions = logits
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels)
 
         for i in range(features.shape[0]):
             name = batch["image_id"][i]
