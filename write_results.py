@@ -149,8 +149,8 @@ class Evaluator():
                 
             # dict of cysts as {'state': state, 'areas': [AREA_real, AREA_pred]}
             assert (self.maskP / f'{name}.png').exists(), self.maskP / f'{name}.png'
-            #gt = load_mask(self.maskP / f'{name}.png')
-            gt = load_mask_resized(self.maskP / f'{name}.png') # make gt consistent with pred which is 768x768 while gt is 1024x1024 
+            gt = load_mask(self.maskP / f'{name}.png')
+            #gt = load_mask_resized(self.maskP / f'{name}.png') # make gt consistent with pred which is 768x768 while gt is 1024x1024 
             pred_img = load_mask(pred)
             
             cysts, IM_s['total_real'], IM_s['total_pred'] = missed_wrong_cysts_dict(gt, pred_img, cutoff=0)
