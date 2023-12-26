@@ -40,8 +40,8 @@ class SegmentationDataset(Dataset):
             image[:, :, 1] = 0
 
         # apply augmentations
-        #sample = self.transform(image=image, mask=mask)
-        #image, mask = sample["image"], sample["mask"]
+        sample = self.transform(image=image, mask=mask)
+        image, mask = sample["image"], sample["mask"]
 
         mask = (mask > 0).astype(np.uint8)
 
