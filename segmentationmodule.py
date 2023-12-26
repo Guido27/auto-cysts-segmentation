@@ -232,7 +232,7 @@ class SegmentCyst(pl.LightningModule):
         masks = batch["masks"] #gt masks
 
         # manual steps in order to perform multi-scale training
-        size_rates =[1] #[0.75, 1.25, 1]
+        size_rates =[0.75] #[0.75, 1.25, 1]
         for rate in size_rates:
     
             #optimizer = self.optimizers()
@@ -359,7 +359,7 @@ class SegmentCyst(pl.LightningModule):
         imgs_name = batch["image_id"]
 
         # manual steps in order to perform multi-scale training
-        size_rates =[1] #[0.75, 1.25, 1]
+        size_rates =[0.75] #[0.75, 1.25, 1]
         for rate in size_rates:
             # ---- data prepare ----
             images = features.float()
@@ -450,7 +450,7 @@ class SegmentCyst(pl.LightningModule):
 
         timing = [time() - t0, features.shape[0]]
 
-        size_rates =[1] #[0.75, 1.25, 1]
+        size_rates =[0.75] #[0.75, 1.25, 1]
         for rate in size_rates:
             # ---- data prepare ----
             images = features.float()
