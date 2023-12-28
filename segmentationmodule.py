@@ -205,8 +205,8 @@ class SegmentCyst(pl.LightningModule):
             #sch.step()
             
         # scheduler step after entire batch (after for loop on rates for each batch)    
-        #sch = self.lr_schedulers()
-        #sch.step()
+        sch = self.lr_schedulers()
+        sch.step()
                 
         return {"loss": loss}
     
@@ -274,8 +274,8 @@ class SegmentCyst(pl.LightningModule):
     def on_train_epoch_end(self):
         self.log("epoch", float(self.trainer.current_epoch))
         #  scheduler.step() after each train epoch
-        sch = self.lr_schedulers()
-        sch.step()
+        #sch = self.lr_schedulers()
+        #sch.step()
         self.log("LR", self.get_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
     # def on_train_end(self):
