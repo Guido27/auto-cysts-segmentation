@@ -184,8 +184,8 @@ class SegmentCyst(pl.LightningModule):
             #logits_ = (logits > 0.5).cpu().detach().numpy().astype("float")
             
             # save predictions
-            if rate == 1:
-                self.save_predictions(logits, imgs_name)
+            #if rate == 1:
+            #    self.save_predictions(logits, imgs_name)
 
             if batch_idx == 0 and self.trainer.current_epoch % 2 == 0:
                 self.log_images(images, gts, logits, batch_idx, rate)
