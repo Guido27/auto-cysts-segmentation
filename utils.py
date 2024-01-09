@@ -270,6 +270,7 @@ def split_dataset(hparams):
         "valid": val_samp,
         "test": test_samp
     }
+
 ### Functions useful for classifier after segmentation model
 
 def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
