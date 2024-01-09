@@ -15,6 +15,7 @@ from utils import (
 )
 
 from PIL import Image
+Image.MAX_IMAGE_PIXELS = None #avoid decompression error?
 import pytorch_lightning as pl
 import torchmetrics as tm
 import wandb
