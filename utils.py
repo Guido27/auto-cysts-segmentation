@@ -8,7 +8,7 @@ from zipfile import ZipFile
 from easydict import EasyDict as ed
 import pandas as pd
 from sklearn.utils import shuffle
-from sklearn.model_selection import StratifiedKFold, GroupKFold
+from sklearn.model_selection import train_test_split
 import cv2
 import re
 from scipy.sparse import csr_matrix
@@ -253,68 +253,23 @@ def init_training(args, hparams, name, tiling=False):
 
 def split_dataset(hparams):
     samples = get_samples(hparams["image_path"], hparams["mask_path"])
-    k=getattr(hparams, 'k', 0)
-    test_exp=getattr(hparams, 'exp', None)
-    leave_one_out=getattr(hparams, 'tube', None)
-    strat_nogroups=getattr(hparams, 'stratify_fold', None)
-    single_exp=getattr(hparams, 'single_exp', None)
-    
-    ##########################################################
-    if single_exp == 1:
-        samples = [u for u in samples if "09.19" in u[0].stem]
-    if single_exp == 2:
-        samples = [u for u in samples if "10.19" in u[0].stem]
-    if single_exp == 3:
-        samples = [u for u in samples if "07.2020" in u[0].stem or "09.2020" in u[0].stem]
-    if single_exp == 4:
-        samples = [u for u in samples if "12.2020" in u[0].stem]
-#         samples = [u for u in samples if "ctrl 11" in u[0].stem.lower() or "t4" in u[0].stem.lower()]
-    if single_exp == 5:
-        samples = [u for u in samples if "07.21" in u[0].stem]
-    ##########################################################
-    
+
     names = [file[0].stem for file in samples]
 
-    unpack = [simplify_names(name) for name in names]
-    df = pd.DataFrame({
-        "filename": names,
-        "treatment": [u[1] for u in unpack],
-        "exp": [date_to_exp(u[0]) for u in unpack],
-        "tube": [u[2] for u in unpack],
-    })
-#     df["te"] = df.treatment + '_' + df.exp.astype(str)
-    df["te"] = (df.treatment + '_' + df.exp.astype(str) + '_' + df.tube.astype(str)).astype('category')
+    df = pd.DataFrame({"filename": names,})
+
+    train_val_set, test_set = train_test_split(samples, test_size=.2, random_state=42) # split dataset in train+validation set and test set
+    train_set, val_set = train_test_split(train_val_set, test_size=.2, random_state=42) # split train+validation set in train and validation sets
     
-    if test_exp is not None or leave_one_out is not None:
-        if leave_one_out is not None:
-            tubes = df[['exp','tube']].astype(int).sort_values(by=['exp', 'tube']).drop_duplicates().reset_index(drop=True).xs(leave_one_out)
-            test_idx = df[(df.exp == tubes.exp)&(df.tube == str(tubes.tube))].index     
-        else:
-            test_idx = df[df.exp == test_exp].index
-    
-        test_samp = [x for i, x in enumerate(samples) if i in test_idx]
-        samples = [x for i, x in enumerate(samples) if i not in test_idx]
-        df = df.drop(test_idx)
-    else:
-        test_samp = None
+    train_samp = train_set
+    val_samp = val_set
+    test_samp = test_set
         
-    if strat_nogroups:
-        skf = StratifiedKFold(n_splits=5, random_state=hparams["seed"], shuffle=True)
-        train_idx, val_idx = list(skf.split(df.filename, df.te))[k]
-    else:
-        df, samples = shuffle(df, samples, random_state=hparams["seed"])
-        gkf = GroupKFold(n_splits=5)
-        train_idx, val_idx = list(gkf.split(df.filename, groups=df.te))[k]
-    
-    train_samp = [tuple(x) for x in np.array(samples)[train_idx]]
-    val_samp = [tuple(x) for x in np.array(samples)[val_idx]]
-    
     return {
         "train": train_samp,
         "valid": val_samp,
         "test": test_samp
     }
-
 ### Functions useful for classifier after segmentation model
 
 def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
