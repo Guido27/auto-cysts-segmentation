@@ -56,8 +56,8 @@ class SegmentCyst(pl.LightningModule):
             self.val_images.mkdir(exist_ok=True, parents=True)
 
         self.loss = object_from_dict(hparams["loss"])
-        self.weight = torch.tensor([0.1, 2.0]) # class with same weights in this datasets
-        self.loss_classifier = torch.nn.CrossEntropyLoss() #NOTE test no weights
+        self.weight = torch.tensor([0.1, 10.0]) # class with same weights in this datasets
+        self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
 
         self.max_val_iou = 0
         self.timing_result = pd.DataFrame(columns=["name", "time"])
