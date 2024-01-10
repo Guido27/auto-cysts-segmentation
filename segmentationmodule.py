@@ -84,7 +84,7 @@ class SegmentCyst(pl.LightningModule):
 
         self.refined_results_folder = ""
         self.refined_results_folder_test = ""
-        self.p_size = 64 # size of patches for classifier
+        self.p_size = 256 # size of patches for classifier
         # set automatic optimization as False
         self.automatic_optimization = False
 
@@ -284,7 +284,7 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images, size = 64, stride = 64)
+            patches, labels = unfold_patches(gts,images, size = self.p_size, stride = self.p_size)
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -298,7 +298,7 @@ class SegmentCyst(pl.LightningModule):
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
             # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size = 64, stride = 64)
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size = self.p_size, stride = self.p_size)
             #refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
 
             
@@ -405,7 +405,7 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images, size=64, stride=64) # here labels are used only to compute validation loss
+            patches, labels = unfold_patches(gts,images, size=self.p_size, stride=self.p_size) # here labels are used only to compute validation loss
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -420,7 +420,7 @@ class SegmentCyst(pl.LightningModule):
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
             # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=64, stride=64)
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=self.p_size, stride=self.p_size)
 
         # NOTE don't save predictions in val set for the moment 
 
@@ -488,7 +488,7 @@ class SegmentCyst(pl.LightningModule):
             else:
                 logits = self.forward(images)
 
-            patches = unfold_patches(gts,images, test=True, size=64, stride = 64) # here labels are used only to compute validation loss
+            patches = unfold_patches(gts,images, test=True, size=self.p_size, stride = self.p_size) # here labels are used only to compute validation loss
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -497,7 +497,7 @@ class SegmentCyst(pl.LightningModule):
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
 
             # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=64, stride=64)
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=self.p_size, stride=self.p_size)
 
         for i in range(features.shape[0]):
             name = batch["image_id"][i]
