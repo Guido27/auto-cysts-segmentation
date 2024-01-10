@@ -669,7 +669,7 @@ def unfold_patches(gt,images, size=128, stride = 128, test = False):
     images_patches = images_patches.contiguous().view(-1,channels,size,size) # reshape to (36*Batch_size, 3, 128, 128)
 
     if test is False: 
-        #unfold in the same way gt masks in order to produce classification labels
+        #unfold gt masks in the same way as RGB images in order to produce coherent classification labels
         gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
         gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
         r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
