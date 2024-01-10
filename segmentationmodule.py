@@ -84,7 +84,7 @@ class SegmentCyst(pl.LightningModule):
 
         self.refined_results_folder = ""
         self.refined_results_folder_test = ""
-        self.p_size = 256 # size of patches for classifier
+        self.p_size = 32 # size of patches for classifier
         # set automatic optimization as False
         self.automatic_optimization = False
 
