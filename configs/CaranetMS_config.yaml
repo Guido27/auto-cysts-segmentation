@@ -1,7 +1,7 @@
 ---
 seed: 1989
 
-num_workers: 2
+num_workers: 0
 experiment_name: "training"
 image_path: "artifacts/tissue-train-pos-v1/images"
 mask_path: "artifacts/tissue-train-pos-v1/masks"
