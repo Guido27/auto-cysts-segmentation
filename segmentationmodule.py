@@ -421,8 +421,6 @@ class SegmentCyst(pl.LightningModule):
             # refine predictions
             refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=128, stride=128)
 
-        # NOTE don't save predictions in val set for the moment 
-
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
                     "val_loss": loss}, 
@@ -433,6 +431,8 @@ class SegmentCyst(pl.LightningModule):
         for metric_name, metric in self.val_metrics.items():
             metric(refined_predictions, gts.int()) # compute metrics on refined masks
             self.log(f"val_{metric_name}", metric, on_step=False, on_epoch=True)
+        
+        save_images(gts[:1],logits[:1], refined_predictions[:1],f"val_batch_idx_{batch_id:03}",Path(self.refined_results_folder))
 
 
     def test_step(self, batch, batch_id):
