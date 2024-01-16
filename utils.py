@@ -233,6 +233,8 @@ def init_training(args, hparams, name, tiling=False):
     hparams['seed'] = args.seed
     hparams['tube'] = args.tube
 
+    hparams['debug'] = args.debug
+
     print("---------------------------------------")
     print("        Running Crossvalidation        ")
     if args.tiling:
