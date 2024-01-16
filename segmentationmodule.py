@@ -498,20 +498,15 @@ class SegmentCyst(pl.LightningModule):
             # refine predictions
             refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=128, stride=128)
 
+            save_images(gts[:1],logits[:1], refined_predictions[:1],f"test_idx_{batch_id:03}",Path(self.refined_results_folder_test))
+
         for i in range(features.shape[0]):
             name = batch["image_id"][i]
             p = logits[i][0]
             logits_ = refined_predictions[i][0] #refined masks
             mask = masks[i][0] #gt masks
 
-            """save_predictions(
-                        mask.detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (p > 0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        (logits_>0.5).detach().squeeze().cpu().numpy().astype(np.uint8),
-                        name,
-                        Path(self.refined_results_folder_test)
-                    )
-            """
+           
             logits_ = (
                 logits_.cpu().numpy() > self.hparams.test_parameters["threshold"]
             ).astype(np.uint8)
