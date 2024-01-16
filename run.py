@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument('--wb', nargs='?', type=str2bool, default=False, const=True, help = "Prevent Wandb to save validation result for each step.")
     parser.add_argument('--evaluate_exp', nargs='?', type=str2bool, default=False, const=True, help = "Apply the evaluation strategy at the end of the train/test pipeline.")
     parser.add_argument('--resume_train_from', type=Path, help='resume training from a specific model ckpt', default=None)
-    
+    parser.add_argument("--debug",type=str2bool, default=False, help="Prints enabled")
     return parser.parse_args()
 
 def main(args):

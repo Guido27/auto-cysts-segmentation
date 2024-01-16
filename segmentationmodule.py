@@ -300,6 +300,11 @@ class SegmentCyst(pl.LightningModule):
             refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size = 128, stride = 128)
             #refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
 
+            if self.hparams.debug:
+                print("Predicted labels:")
+                print(predicted_labels)
+                print("True Labels:")
+                print(labels)
             
             self.log_dict(
                 {
