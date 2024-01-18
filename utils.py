@@ -234,6 +234,7 @@ def init_training(args, hparams, name, tiling=False):
     hparams['tube'] = args.tube
 
     hparams['debug'] = args.debug
+    hparams['patch_size'] = args.patch_size
 
     print("---------------------------------------")
     print("        Running Crossvalidation        ")
