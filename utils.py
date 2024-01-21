@@ -320,6 +320,7 @@ def split_dataset(hparams):
 
 ### Functions useful for classifier after segmentation model
 
+# dismissed
 def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
     """
     This functions extract patches from RGB image accoding to predicted segmentation mask. Each extracted patch has an assigned label: 0 if the segmented area does't correspond with a segmentation area in gt mask,
@@ -425,7 +426,7 @@ def extract_patches(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20
     #exclude always the first empty tensor declared with torch.empty
     return t[1:, :, :, :].cuda(), labels[1:], coordinates, patch_each_image
 
-# this function has been incorporated in extract_patches 
+# dismissed, incorporated in extract_patches 
 def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default = 20):
   """Extract wrong segmented areas in segmentation model predicted mask. 
   A segmented area in a prediction is considered wrong when the corresponding area in the ground truth segmentation mask is totally black.
@@ -476,7 +477,7 @@ def extract_wrong_cysts(gt, pred, image, cutoff=0, p_size = 64, padding_default 
 
   return t[1:, :, :, :] ,w_cysts #exclude the first empty tensor declared with torch.empty
 
-# this function has been incorporated in extract_patches
+# dismissed, incorporated in extract_patches
 def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20):
     """Extract from RGB image detected cysts. 
     In order to define if a segmented element is a true cyst the ground truth mask is used: if a segmented object in the prediction mask has even just a single
@@ -525,7 +526,7 @@ def extract_real_cysts(gt_mask, pred_mask, image, p_size=64, padding_default=20)
     
     return t[1:, :, :, :],l #exclude the first empty tensor declared with torch.empty in t
 
-
+# dismissed
 def extract_segmented_cysts_test_time(prediction, image, p_size = 64, padding_default = 20):
     """Extract patches from image based on segmented areas in prediction using contours over predicted segmented mask (segmented mask = (logits > 0.5)).
        Returns a tensor of patches that the classifier have to classify at test time.
@@ -568,6 +569,7 @@ def extract_segmented_cysts_test_time(prediction, image, p_size = 64, padding_de
 
     return t[1:, :, :, :],l #exclude the first empty tensor declared with torch.empty in t
 
+# dismissed
 def refine_predicted_masks(logits,coordinates,patch_each_image,predicted_labels):
     """
     Info
@@ -650,39 +652,78 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     f.savefig(path / f'{image_name}.png')
     plt.close()
 
-def unfold_patches(gt,images, size=128, stride = 128, test = False):
-    """Compute patches of current batch RGB images using the unfold method. Patches have dimension "size", default is 128 because images in default settings have 768x768 dimension.
-    
+def compute_patches(gt, segm_logits, images, size=128, stride = 128, t=200, test = False):
+    """Compute non overlapping patches of current batch RGB images using the unfold method. 
+    Patches have dimension "size", default is 128 because images in default settings have 768x768 dimension.
+    If "test" is False also the label tensor is computed.
+
+    A patch is considered POSITIVE if both ground truth relative patch and predicted mask relative patch contains at least "t" pixels set to 1.
+    If only predicted mask relative patch contains segmented pixels, its label will be NEGATIVE. 
+    Only patches associated with segmented patches in predicted mask will be passed to classifier, avoiding to pass all patches which could contains too much negative patches.
+
     Parameters
     ----------
     - gt: ground truth masks in batch format, having shape (B,1,MASK_SIZE, MASK_SIZE)
     - image: batch of RGB images, shape is (B,3,IMG_SIZE,IMG_SIZE) 
+    - segm_logits: segmentation model output, contains logits so it should be thresholded with 0.5 to compute final predicted segmentation mask
     - size: size of patches, default is 128
     - stride: stride should be equal to size in order to avoid overlapping
+    - t: threshold, number of pixels that need to be set to 1 to consider a patch as containing segmentation predictions
     - test: default False, if true means that this function has been called from test_step where labels are not required.
     
     Returns
     -------
-    - images_patches: patches in unfolded view, shape is (N*Batch_size, 3, 128, 128) where N is the number of extracted patches from each image, in default settings is 36
-    - labels: tensor of shape (N*Batch_size), contains labels associated with each patch. Indexes are coherent, meaning that labels[X] is label of patch images_patches[X].
+    - images_patches: patches in unfolded view, shape is (N, 3, 128, 128) where N is the number of extracted patches from all batch images, number is variable.
+    - labels: tensor of shape (N), contains labels associated with each  selected patch.
+    #TODO definire bene i returns
     """
     channels = images.shape[1] # RGB => 3
     #unfold RGB images in patches
     images_patches = images.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
-    images_patches = images_patches.contiguous().view(-1,channels,size,size) # reshape to (36*Batch_size, 3, 128, 128)
+    images_patches = images_patches.contiguous().view(-1,channels,size,size) # reshape to (N_patches_from_each_image*batch_size, 3, 128, 128)
 
     if test is False: 
         #unfold gt masks in the same way as RGB images in order to produce coherent classification labels
         gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
-        gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
+        gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (N_patches_from_each_image*batch_size, 1, 128, 128) 
         r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
-        labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
-        labels = labels.view(labels.shape[0]) # reshape tensor to shape [N,] as expected from CrossEntropyLoss
-        return images_patches, labels
+        gt_labels = torch.where(r>t,1,0) # if at least t pixels are set to 1 consider patch as containing segmentation gt predicion
+
+        #unfold also pred masks in the same way as gt masks
+        pred = segm_logits > .5  # compute predicted segmentation masks from segmentation model output (which contains logits)
+        pred_patches = pred.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
+        pred_patches = pred_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (N_patches_from_each_image*batch_size, 1, 128, 128) 
+        r = torch.sum(torch.sum(pred_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
+        pred_labels = torch.where(r>t,1,0) # if at least t pixels are set to 1 consider patch as containing segmentation pred predicion 
+
+        # gt_labels(A) and pred_labels(B) have shape (N_patches_from_each_image*batch_size, 1)
+
+        # A AND B = pos 
+        # compute pos tensor: contains 1 if relative patch in images_patches must be labeled as positive. pos[X]=1 if images_patches[X] is a positive patch. Shape is the same as gt/pred_labels
+        pos = torch.bitwise_and(gt_labels, pred_labels)
+
+        # B - pos = neg
+        # compute neg tensor: contains -1 if relative patch in images_patches must be labeled as negative. neg[X]=-1 if images_patches[X] is a negative patch. Shape is the same as pos tensor
+        neg = torch.sub(pos, pred_labels)
+
+        x = pos + neg # merge pos and neg tensors
+        non_zero_idxs = x.nonzero(as_tuple=True)[0] # get indexes of non zero values in merged tensor
+        labels_for_classifier = x[non_zero_idxs] # labeled patches have value of 1 or -1 in x. Take those to pass to classifier. Zero labeled patches are not passed to classifier since they don't correspond to segmented areas from segmentation model
+        labels_for_classifier[labels_for_classifier==-1] = 0 # change value from -1 to 0 for negative patches
+        labels = labels_for_classifier.view(labels_for_classifier.shape[0]) # reshape labels tensor to shape [N,] as expected from CrossEntropyLoss
+        
+        # get positive and negative patches that must be classified
+        patches = images_patches[non_zero_idxs]
+
+        return patches, labels, non_zero_idxs
     else:
+        # TODO capire come fare nel test set e cosa ritornare (forse solo le patch da classificare e i non_zero_idxs)
         # call from test_step, avoid label computation because not required
         return images_patches
+
+#TODO principale: finire di modificare la funzione successiva in modo che vada a modificare le predizioni in base alle label predette dal classificatore
     
+# TODO modificare 
 def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, channels = 1):
     """Refine predicted segmentation masks with labels computed from classifier over RGB images.
     
