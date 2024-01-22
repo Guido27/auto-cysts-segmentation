@@ -10,7 +10,7 @@ from utils import (
     refine_predicted_masks,
     save_images,
     extract_patches,
-    unfold_patches,
+    compute_patches,
     refine_predictions_unfolding
 )
 
@@ -283,7 +283,7 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images, size = self.patch_size, stride = self.patch_size)
+            patches, labels, idxs = compute_patches(gts, logits, images, size = self.patch_size, stride = self.patch_size)
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -293,13 +293,14 @@ class SegmentCyst(pl.LightningModule):
           
             # compute classifier loss over all patches in current batch
             classifier_loss = self.loss_classifier(classifier_predictions, labels)
+
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
             # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size = self.patch_size, stride = self.patch_size)
-            #refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
-
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, idxs, size = self.patch_size, stride = self.patch_size)
+        
+            # debug 
             if self.hparams.debug:
                 print("Predicted labels:")
                 print(predicted_labels)
@@ -409,7 +410,7 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images, size=self.patch_size, stride=self.patch_size) # here labels are used only to compute validation loss
+            patches, labels, idxs = compute_patches(gts, logits, images, size=self.patch_size, stride=self.patch_size) # here labels are used only to compute validation loss
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -417,14 +418,14 @@ class SegmentCyst(pl.LightningModule):
             # get predicted labels from classifier logits
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
           
-            # compute classifier loss over all patches in current batch
+            # compute classifier val loss over all patches in current batch
             classifier_loss = self.loss_classifier(classifier_predictions, labels)
 
-            # training loss
+            # val loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
             # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=self.patch_size, stride=self.patch_size)
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, idxs, size=self.patch_size, stride=self.patch_size)
 
         self.log_dict({"val_segmentation_loss": segmentation_loss,
                     "val_classifier_loss": classifier_loss,
@@ -492,7 +493,7 @@ class SegmentCyst(pl.LightningModule):
             else:
                 logits = self.forward(images)
 
-            patches = unfold_patches(gts,images, test=True, size=self.patch_size, stride = self.patch_size) # here labels are used only to compute validation loss
+            patches, idxs = compute_patches(gts, logits, images, test=True, size=self.patch_size, stride = self.patch_size) # here labels are used only to compute validation loss
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -501,7 +502,7 @@ class SegmentCyst(pl.LightningModule):
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
 
             # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=self.patch_size, stride=self.patch_size)
+            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, idxs, size=self.patch_size, stride=self.patch_size)
 
             save_images(gts[:1],logits[:1], refined_predictions[:1],f"test_idx_{batch_id:03}",Path(self.refined_results_folder_test))
 
