@@ -749,7 +749,7 @@ def refine_predictions_unfolding(segm_logits, labels, non_zero_idxs, size = 128,
     refining_tensor = torch.ones((u_pred.shape[0]),dtype=torch.long) # TODO maybe with cuda is LongTensor?
     indices = (non_zero_idxs,) # tuple of tensors in order to use index_put_ later
     #debug
-    print(non_zero_idxs.get_device(), labels.get_device())
+    print(non_zero_idxs.get_device(), labels.get_device(), refining_tensor.get_device())
     refining_tensor.index_put_([non_zero_idxs], labels)
 
     # refine prediction: labels 1 means "should contain cysts" so predicted area is inaltered, 
