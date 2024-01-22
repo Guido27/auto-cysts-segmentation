@@ -750,7 +750,7 @@ def refine_predictions_unfolding(segm_logits, labels, non_zero_idxs, size = 128,
     indices = (non_zero_idxs,) # tuple of tensors in order to use index_put_ later
     #debug
     print(non_zero_idxs.get_device(), labels.get_device())
-    refining_tensor.index_put_(indices, labels)
+    refining_tensor.index_put_([non_zero_idxs], labels)
 
     # refine prediction: labels 1 means "should contain cysts" so predicted area is inaltered, 
     # 0 means "here shouldn't be cysts" so predicted ones as 0 are refined as black
