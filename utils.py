@@ -746,11 +746,9 @@ def refine_predictions_unfolding(segm_logits, labels, non_zero_idxs, size = 128,
     unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)
     
     u_pred = u_pred.contiguous().view(-1,channels,size,size) # reshaping in order to muliply it with labels for refinement
-    refining_tensor = torch.ones((u_pred.shape[0]),dtype=torch.long) # TODO maybe with cuda is LongTensor?
+    refining_tensor = torch.ones((u_pred.shape[0]),dtype=torch.long).cuda() # TODO maybe with cuda is LongTensor?
     indices = (non_zero_idxs,) # tuple of tensors in order to use index_put_ later
-    #debug
-    print(non_zero_idxs.get_device(), labels.get_device(), refining_tensor.get_device())
-    refining_tensor.index_put_([non_zero_idxs], labels)
+    refining_tensor.index_put_(indices, labels)
 
     # refine prediction: labels 1 means "should contain cysts" so predicted area is inaltered, 
     # 0 means "here shouldn't be cysts" so predicted ones as 0 are refined as black
