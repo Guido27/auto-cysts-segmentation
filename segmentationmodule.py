@@ -306,7 +306,7 @@ class SegmentCyst(pl.LightningModule):
                 classifier_loss = self.loss_classifier(classifier_predictions, labels)
             if self.hparams.c_loss == "Focal":
                 classifier_predictions = self.m(classifier_predictions)
-                classifier_loss = classifier_predictions, labels
+                classifier_loss = self.loss_classifier(classifier_predictions, labels)
 
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
@@ -437,7 +437,7 @@ class SegmentCyst(pl.LightningModule):
                 classifier_loss = self.loss_classifier(classifier_predictions, labels)
             if self.hparams.c_loss == "Focal":
                 classifier_predictions = self.m(classifier_predictions)
-                classifier_loss = classifier_predictions, labels
+                classifier_loss = self.loss_classifier(classifier_predictions, labels)
 
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
