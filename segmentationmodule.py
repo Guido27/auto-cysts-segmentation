@@ -27,7 +27,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
 from models import res2net50
-from focal_loss.focal_loss import FocalLoss
+#from focal_loss.focal_loss import FocalLoss
+from losses import FocalLoss
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -51,7 +52,7 @@ class SegmentCyst(pl.LightningModule):
                 2048, 1
             )  # changing the number of output features to 1
             self.m = torch.nn.Sigmoid()
-            self.loss_classifier = FocalLoss(gamma = self.hparams.gamma)
+            self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=0.25)
 
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
