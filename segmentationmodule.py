@@ -306,6 +306,7 @@ class SegmentCyst(pl.LightningModule):
                 classifier_loss = self.loss_classifier(classifier_predictions, labels)
             if self.hparams.c_loss == "Focal":
                 classifier_predictions = self.m(classifier_predictions)
+                predicted_labels = torch.where(classifier_predictions > .5, 1, 0) # if prob of patch > 0.5 => predicted class 1 else 0
                 classifier_loss = self.loss_classifier(classifier_predictions.reshape(classifier_predictions.shape[0]), labels)
 
             # training loss
@@ -429,14 +430,15 @@ class SegmentCyst(pl.LightningModule):
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
             
-            # get predicted labels from classifier logits
-            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-          
+            
             # compute classifier loss over all patches in current batch
             if self.hparams.c_loss == "CE":
+                # get predicted labels from classifier logits
+                predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
                 classifier_loss = self.loss_classifier(classifier_predictions, labels)
             if self.hparams.c_loss == "Focal":
                 classifier_predictions = self.m(classifier_predictions)
+                predicted_labels = torch.where(classifier_predictions > .5, 1, 0) # if prob of patch > 0.5 => predicted class 1 else 0
                 classifier_loss = self.loss_classifier(classifier_predictions.reshape(classifier_predictions.shape[0]), labels)
 
             # training loss
