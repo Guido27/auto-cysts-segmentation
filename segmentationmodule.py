@@ -27,7 +27,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
 from models import res2net50
-
+from focal_loss.focal_loss import FocalLoss
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -38,14 +38,26 @@ class SegmentCyst(pl.LightningModule):
         self.model = object_from_dict(hparams["model"])
 
         self.classifier = res2net50(pretrained=True)
-        self.classifier.fc = torch.nn.Linear(
-            2048, 2
-        )  # changing the number of output features to 2
+
+        if self.hparams.c_loss == "CE":
+            self.classifier.fc = torch.nn.Linear(
+                2048, 2
+            )  # changing the number of output features to 2
+            self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
+            self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
+
+        if self.hparams.c_loss == "Focal":
+            self.classifier.fc = torch.nn.Linear(
+                2048, 1
+            )  # changing the number of output features to 1
+            self.m = torch.nn.Sigmoid()
+            self.loss_classifier = FocalLoss(gamma = self.hparams.gamma)
 
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
             / "images/train_predictions"
         )
+
         self.val_images = (
             Path(self.hparams.checkpoint_callback["dirpath"]) / "images/val_predictions"
         )
@@ -55,8 +67,6 @@ class SegmentCyst(pl.LightningModule):
             self.val_images.mkdir(exist_ok=True, parents=True)
 
         self.loss = object_from_dict(hparams["loss"])
-        self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
-        self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
 
         self.max_val_iou = 0
         self.timing_result = pd.DataFrame(columns=["name", "time"])
@@ -292,7 +302,12 @@ class SegmentCyst(pl.LightningModule):
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
           
             # compute classifier loss over all patches in current batch
-            classifier_loss = self.loss_classifier(classifier_predictions, labels)
+            if self.hparams.c_loss == "CE":
+                classifier_loss = self.loss_classifier(classifier_predictions, labels)
+            if self.hparams.c_loss == "Focal":
+                classifier_predictions = self.m(classifier_predictions)
+                classifier_loss = classifier_predictions, labels
+
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
@@ -418,7 +433,11 @@ class SegmentCyst(pl.LightningModule):
             predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
           
             # compute classifier loss over all patches in current batch
-            classifier_loss = self.loss_classifier(classifier_predictions, labels)
+            if self.hparams.c_loss == "CE":
+                classifier_loss = self.loss_classifier(classifier_predictions, labels)
+            if self.hparams.c_loss == "Focal":
+                classifier_predictions = self.m(classifier_predictions)
+                classifier_loss = classifier_predictions, labels
 
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches

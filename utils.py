@@ -235,6 +235,8 @@ def init_training(args, hparams, name, tiling=False):
 
     hparams['debug'] = args.debug
     hparams['patch_size'] = args.patch_size
+    hparams['c_loss'] = args.c_loss
+    hparams['gamma'] = args.gamma
 
     print("---------------------------------------")
     print("        Running Crossvalidation        ")
