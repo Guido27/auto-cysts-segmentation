@@ -305,10 +305,12 @@ class SegmentCyst(pl.LightningModule):
                 predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
                 classifier_loss = self.loss_classifier(classifier_predictions, labels)
             if self.hparams.c_loss == "Focal":
-                classifier_predictions = self.m(classifier_predictions)
-                predicted_labels = torch.where(classifier_predictions > .5, 1, 0) # if prob of patch > 0.5 => predicted class 1 else 0
-                classifier_loss = self.loss_classifier(classifier_predictions.reshape(classifier_predictions.shape[0]), labels)
-
+                # TODO le linee commentate qui sotto sono per l'implementazione di FocalLoss che si scarica con pip
+                #classifier_predictions = self.m(classifier_predictions)
+                #predicted_labels = torch.where(classifier_predictions > .5, 1, 0) # if prob of patch > 0.5 => predicted class 1 else 0
+                #classifier_loss = self.loss_classifier(classifier_predictions.reshape(classifier_predictions.shape[0]), labels)
+                predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                classifier_loss = self.loss_classifier(classifier_predictions, labels)
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
 
@@ -436,9 +438,12 @@ class SegmentCyst(pl.LightningModule):
                 predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
                 classifier_loss = self.loss_classifier(classifier_predictions, labels)
             if self.hparams.c_loss == "Focal":
-                classifier_predictions = self.m(classifier_predictions)
-                predicted_labels = torch.where(classifier_predictions > .5, 1, 0) # if prob of patch > 0.5 => predicted class 1 else 0
-                classifier_loss = self.loss_classifier(classifier_predictions.reshape(classifier_predictions.shape[0]), labels)
+                # TODO le linee commentate qui sotto sono per l'implementazione di FocalLoss che si scarica con pip
+                #classifier_predictions = self.m(classifier_predictions)
+                #predicted_labels = torch.where(classifier_predictions > .5, 1, 0) # if prob of patch > 0.5 => predicted class 1 else 0
+                #classifier_loss = self.loss_classifier(classifier_predictions.reshape(classifier_predictions.shape[0]), labels)
+                predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
+                classifier_loss = self.loss_classifier(classifier_predictions, labels)
 
             # training loss
             loss = segmentation_loss + classifier_loss # both computed over batch images and patches
