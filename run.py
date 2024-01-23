@@ -34,7 +34,7 @@ def get_args():
     parser.add_argument("--patch_size", default=128, type=int, help="patch size for classifier" )
     parser.add_argument("-c_loss", "--c_loss", type=str, default="CE", help="Classifier loss. CE = cross entropy loss, Focal = Focal loss")
     parser.add_argument("-gamma", "--gamma", default=0.7, type=float, help="Gamma parameter for FocalLoss" )
-    parser.add_argument("-alpha", "--alpha", default=0.25, type=float, help="Alpha parameter for FocalLoss, weight of class 1" )
+    parser.add_argument("-alpha", "--alpha", default=0.25, type=float, help="Alpha parameter for FocalLoss" )
 
     return parser.parse_args()
 
