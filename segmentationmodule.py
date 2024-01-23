@@ -52,7 +52,7 @@ class SegmentCyst(pl.LightningModule):
                 2048, 2 # 2 if focal from file, 1 if focal from pip
             )  # changing the number of output features to 1
             self.m = torch.nn.Sigmoid()
-            self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=0.25)
+            self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=self.hparams.alpha)
 
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
