@@ -49,7 +49,7 @@ class SegmentCyst(pl.LightningModule):
 
         if self.hparams.c_loss == "Focal":
             self.classifier.fc = torch.nn.Linear(
-                2048, 1
+                2048, 2 # 2 if focal from file, 1 if focal from pip
             )  # changing the number of output features to 1
             self.m = torch.nn.Sigmoid()
             self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=0.25)
