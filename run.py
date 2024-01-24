@@ -32,6 +32,8 @@ def get_args():
     parser.add_argument('--resume_train_from', type=Path, help='resume training from a specific model ckpt', default=None)
     parser.add_argument("--debug",type=str2bool, default=False, help="Prints enabled")
     parser.add_argument("--patch_size", default=128, type=int, help="patch size for classifier" )
+    parser.add_argument("-gamma", "--gamma", default=0.7, type=float, help="Gamma parameter for FocalLoss" )
+    parser.add_argument("-alpha", "--alpha", default=0.25, type=float, help="Alpha parameter for FocalLoss" )
     return parser.parse_args()
 
 def main(args):
