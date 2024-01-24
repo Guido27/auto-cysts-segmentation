@@ -28,6 +28,7 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 from models import res2net50
 from losses import FocalLoss
+from efficientnet_pytorch import EfficientNet
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -37,21 +38,22 @@ class SegmentCyst(pl.LightningModule):
         self.model_name = self.hparams.model.get("name", "").lower()
         self.model = object_from_dict(hparams["model"])
 
-        self.classifier = res2net50(pretrained=True)
+        # classifier settings
+        if self.hparams.classifier == "RES2NET":
+            self.classifier = res2net50(pretrained=True)
+            self.classifier.fc = torch.nn.Linear(2048, 2)  # changing the number of output classes to 2
+
+        if self.hparams.classifier == "EFFICIENTNET":
+            self.classifier = EfficientNet.from_pretrained('efficientnet-b7', num_classes=2)
 
         if self.hparams.c_loss == "CE":
-            self.classifier.fc = torch.nn.Linear(
-                2048, 2
-            )  # changing the number of output features to 2
             self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
             self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
 
         if self.hparams.c_loss == "Focal":
-            self.classifier.fc = torch.nn.Linear(
-                2048, 2 #
-            )  # changing the number of output features to 1
             self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=self.hparams.alpha)
-
+        # end classifier setings 
+            
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
             / "images/train_predictions"
