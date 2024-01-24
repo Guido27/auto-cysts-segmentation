@@ -27,7 +27,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
 from models import res2net50
-
+from losses import FocalLoss
 
 class SegmentCyst(pl.LightningModule):
     def __init__(self, **hparams):
@@ -55,8 +55,12 @@ class SegmentCyst(pl.LightningModule):
             self.val_images.mkdir(exist_ok=True, parents=True)
 
         self.loss = object_from_dict(hparams["loss"])
-        self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
-        self.loss_classifier = torch.nn.CrossEntropyLoss()
+
+        if self.hparams.c_loss == "CE":
+            self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
+            self.loss_classifier = torch.nn.CrossEntropyLoss()
+        if self.hparams.c_loss == "Focal":
+            self.loss_classifier= FocalLoss(gamma=self.hparams.gamma, alpha=self.hparams.alpha)
 
         self.max_val_iou = 0
         self.timing_result = pd.DataFrame(columns=["name", "time"])
