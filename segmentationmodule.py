@@ -44,7 +44,7 @@ class SegmentCyst(pl.LightningModule):
             self.classifier.fc = torch.nn.Linear(2048, 2)  # changing the number of output classes to 2
 
         if self.hparams.classifier == "EFFICIENTNET":
-            self.classifier = EfficientNet.from_pretrained('efficientnet-b7', num_classes=2)
+            self.classifier = EfficientNet.from_pretrained('efficientnet-b5', num_classes=2)
 
         if self.hparams.c_loss == "CE":
             self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
