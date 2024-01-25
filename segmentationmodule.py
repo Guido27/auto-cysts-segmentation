@@ -42,6 +42,7 @@ class SegmentCyst(pl.LightningModule):
         if self.hparams.classifier == "RES2NET":
             self.classifier = res2net50(pretrained=True)
             self.classifier.fc = torch.nn.Linear(2048, 2)  # changing the number of output classes to 2
+            self.classifier.conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3,bias=False) # input channels set to 4
 
         if self.hparams.classifier == "EFFICIENTNET":
             self.classifier = EfficientNet.from_pretrained('efficientnet-b5', num_classes=2)

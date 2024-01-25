@@ -655,13 +655,14 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     f.savefig(path / f'{image_name}.png')
     plt.close()
 
-def unfold_patches(gt,images, size=128, stride = 128, test = False):
+def unfold_patches(gt, images, predictions, size=128, stride = 128, test = False):
     """Compute patches of current batch RGB images using the unfold method. Patches have dimension "size", default is 128 because images in default settings have 768x768 dimension.
     
     Parameters
     ----------
     - gt: ground truth masks in batch format, having shape (B,1,MASK_SIZE, MASK_SIZE)
-    - image: batch of RGB images, shape is (B,3,IMG_SIZE,IMG_SIZE) 
+    - images: batch of RGB images, shape is (B,3,IMG_SIZE,IMG_SIZE) 
+    - predictions: batch of predicted segmentation masks from segmentation model. Nota bene: they are logits so need to threshold them to obtain segm. masks properly
     - size: size of patches, default is 128
     - stride: stride should be equal to size in order to avoid overlapping
     - test: default False, if true means that this function has been called from test_step where labels are not required.
@@ -676,6 +677,14 @@ def unfold_patches(gt,images, size=128, stride = 128, test = False):
     images_patches = images.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) 
     images_patches = images_patches.contiguous().view(-1,channels,size,size) # reshape to (36*Batch_size, 3, 128, 128)
 
+    #unfold predicted masks in the same way as RGB images in order to concat them in a 4 channels image
+    pred = (predictions > .5).float()
+    pred_u = pred.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
+    pred_u = pred_u.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
+    
+    #concat to het 4 channels patches
+    images_patches = torch.cat((images_patches, pred_u), dim = 1)
+    
     if test is False: 
         #unfold gt masks in the same way as RGB images in order to produce coherent classification labels
         gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
