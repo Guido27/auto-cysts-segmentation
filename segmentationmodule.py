@@ -264,7 +264,7 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images, size = self.patch_size, stride = self.patch_size)
+            patches, labels = unfold_patches(gts,images,logits, size = self.patch_size, stride = self.patch_size)
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
@@ -394,7 +394,7 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images, size=self.patch_size, stride=self.patch_size) # here labels are used only to compute validation loss
+            patches, labels = unfold_patches(gts,images,logits, size=self.patch_size, stride=self.patch_size) # here labels are used only to compute validation loss
     
             # compute classifier predictions/logits
             classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
