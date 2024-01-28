@@ -49,7 +49,7 @@ class SegmentCyst(pl.LightningModule):
 
         if self.hparams.c_loss == "CE":
             self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
-            self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
+            self.loss_classifier = torch.nn.CrossEntropyLoss()
 
         if self.hparams.c_loss == "Focal":
             self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=self.hparams.alpha)
