@@ -695,7 +695,7 @@ def unfold_patches(gt, images, predictions, size=128, stride = 128, n = 8,  test
         
         # get positive patches indexes
         gt_labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
-        pos_idxs = np.array(gt_labels.nonzero(as_tuple=True)[0])
+        pos_idxs = np.array(gt_labels.cpu().nonzero(as_tuple=True)[0])
         # get negative patches indexes ( random choice )
         while(True):
             neg_idxs = np.random.choice(gt_labels.shape[0], n, replace = False)
