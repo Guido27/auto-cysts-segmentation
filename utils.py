@@ -717,8 +717,9 @@ def unfold_patches(gt, images, predictions, size=128, stride = 128, n = 8,  test
         gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
         gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
         r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
-        # get positive patches indexes
+        # get positive patches indexes, all others are negative patches
         gt_labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
+        gt_labels = gt_labels.view(gt_labels.shape[0]) # reshape tensor to shape [N,] as expected from CrossEntropyLoss
         return images_patches, gt_labels
     
 def refine_predictions_unfolding(predictions, labels, patches_idxs=None, size = 128, stride = 128, channels = 1):
