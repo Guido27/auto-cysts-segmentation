@@ -655,7 +655,7 @@ def save_images(gt_masks, segmented_masks, refined_masks, image_name, path):
     f.savefig(path / f'{image_name}.png')
     plt.close()
 
-def unfold_patches(gt, images, predictions, size=128, stride = 128, test = False):
+def unfold_patches(gt, images, predictions, size=128, stride = 128, n = 8,  test = False):
     """Compute patches of current batch RGB images using the unfold method. Patches have dimension "size", default is 128 because images in default settings have 768x768 dimension.
     
     Parameters
@@ -665,12 +665,14 @@ def unfold_patches(gt, images, predictions, size=128, stride = 128, test = False
     - predictions: batch of predicted segmentation masks from segmentation model. Nota bene: they are logits so need to threshold them to obtain segm. masks properly
     - size: size of patches, default is 128
     - stride: stride should be equal to size in order to avoid overlapping
-    - test: default False, if true means that this function has been called from test_step where labels are not required.
+    - n: number of negative patches to extract from each batch of images during training step
+    - test: default False, if true means that this function has been called from val or test step where all patches have to be classified.
     
     Returns
     -------
     - images_patches: patches in unfolded view, shape is (N*Batch_size, 3, 128, 128) where N is the number of extracted patches from each image, in default settings is 36
     - labels: tensor of shape (N*Batch_size), contains labels associated with each patch. Indexes are coherent, meaning that labels[X] is label of patch images_patches[X].
+    - patches_idxs: only if call from training step, contains indeces of selected patches passed to classifier
     """
     channels = images.shape[1] # RGB => 3
     #unfold RGB images in patches
@@ -690,35 +692,72 @@ def unfold_patches(gt, images, predictions, size=128, stride = 128, test = False
         gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
         gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
         r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
-        labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
+        
+        # get positive patches indexes
+        gt_labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
+        pos_idxs = np.array(gt_labels.nonzero(as_tuple=True)[0])
+        # get negative patches indexes ( random choice )
+        while(True):
+            neg_idxs = np.random.choice(gt_labels.shape[0], n, replace = False)
+            if(np.in1d(pos_idxs,neg_idxs).any() == False):
+             # if in neg_idxs there is no value from pos_idxs:
+                break
+
+        # get all patches that have to be passed to classifier
+        gt_labels[neg_idxs] = -1 # set negatives to -1 as label, transform in 0 later
+        patches_idxs = gt_labels.nonzero(as_tuple = True)[0]
+        labels = torch.where(gt_labels[patches_idxs] == -1, 0, 1) # get labels associated with selected patches and tranform -1 to 0
+        patches = images_patches[patches_idxs, :, :,:]
+        
         labels = labels.view(labels.shape[0]) # reshape tensor to shape [N,] as expected from CrossEntropyLoss
-        return images_patches, labels
+        return patches, labels, patches_idxs
     else:
-        # call from test_step, avoid label computation because not required
-        return images_patches
+        # call from validatio or test_step: pass all patches from each image
+        #unfold gt masks in the same way as RGB images in order to produce coherent classification labels
+        gt_patches = gt.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride)
+        gt_patches = gt_patches.contiguous().view(-1,1,size,size) # channels here is 1, shape will be (36*Batch_size, 1, 128, 128) 
+        r = torch.sum(torch.sum(gt_patches, dim = 2), dim = 2) # count the number of pixels set to 1 in each patch
+        # get positive patches indexes
+        gt_labels = torch.where(r>200,1,0) #NOTE if at least 200 pixels are set to 1 consider patch as positive
+        return images_patches, gt_labels
     
-def refine_predictions_unfolding(predictions, labels, size = 128, stride = 128, channels = 1):
+def refine_predictions_unfolding(predictions, labels, patches_idxs=None, size = 128, stride = 128, channels = 1):
     """Refine predicted segmentation masks with labels computed from classifier over RGB images.
     
     Parameters
     ----------
     predictions: tensor with shape [B,1,768,768] where B batch size. Contains segmentation model predicted masks over batch images.
     labels: tensor of shape [N,] contains labels (0/1) predicted from classifier over each patch extracted from RGB images in current batch.
+    patches_idxs: list of indexes in extended batch tensor of classified patches, if None means that all patches have been classified ( call from validation or test steps)
     
     Return
     ------
     refined predictions: Tensor of shape [B,1,768,768]. According to classifier predictions, segmentation masks are refined setting to 0 areas which corresponds to patches classified as 0 (not containing cysts) from classifier.
     """
-    batch_size = predictions.shape[0]
-    u_pred = predictions.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) # unfold predicted masks
-    unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)
-    
-    u_pred = u_pred.contiguous().view(-1,channels,size,size) # reshaping in order to muliply it with labels for refinement
-    labels = labels.reshape(labels.shape[0], 1 , 1, 1) # reshape labels in order to exploit broadcasting
+    if patches_idxs is None:
+        # call from test/val step: labels have same size of unfolded batches
 
-    # refine prediction: labels 1 means "should contain cysts" so predicted area is inaltered, 
-    # 0 means "here shouldn't be cysts" so predicted are is refined as black
-    refined_mask = u_pred * labels
+        batch_size = predictions.shape[0]
+        u_pred = predictions.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) # unfold predicted masks
+        unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)
+
+        u_pred = u_pred.contiguous().view(-1,channels,size,size) # reshaping in order to muliply it with labels for refinement
+        labels = labels.reshape(labels.shape[0], 1 , 1, 1) # reshape labels in order to exploit broadcasting
+
+        # refine prediction: labels 1 means "should contain cysts" so predicted area is inaltered, 
+        # 0 means "here shouldn't be cysts" so predicted are is refined as black
+        refined_mask = u_pred * labels
+    else:
+        batch_size = predictions.shape[0]
+        u_pred = predictions.unfold(2,size,stride).unfold(3,size,stride).unfold(4,size,stride) # unfold predicted masks
+        unfold_shape = u_pred.size() # save unfolded shape for later (reconstruction after refinement)
+
+        u_pred = u_pred.contiguous().view(-1,channels,size,size) # reshaping in order to muliply it with labels for refinement
+        refining_tensor = torch.ones((u_pred.shape[0]),dtype=torch.long).cuda() 
+        indices = (patches_idxs,) # tuple of tensors in order to use index_put_ later
+        refining_tensor = refining_tensor.index_put_(indices, labels)
+        refined_mask = u_pred * refining_tensor.view(u_pred.shape[0],1,1,1)
+
 
     # reconstruct batch shape after refinement
     rec = refined_mask.view(unfold_shape)
