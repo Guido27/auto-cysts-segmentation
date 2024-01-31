@@ -5,11 +5,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 from utils import (
     object_from_dict,
-    find_average,
-    binary_mean_iou,
-    refine_predicted_masks,
     save_images,
-    extract_patches,
     unfold_patches,
     refine_predictions_unfolding
 )
