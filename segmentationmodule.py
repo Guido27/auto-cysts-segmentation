@@ -170,7 +170,7 @@ class SegmentCyst(pl.LightningModule):
         #  scheduler.step() after each train epoch
         #sch = self.lr_schedulers()
         #sch.step()
-        segmentation_scheduler, _ = self.lr_schedulers()
+        segmentation_scheduler = self.lr_schedulers()
         segmentation_scheduler.step()
         self.log("segmentation_lr", self.get_segmentation_lr(), on_step=False, on_epoch=True, prog_bar=True)
 
