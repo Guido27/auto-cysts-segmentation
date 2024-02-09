@@ -33,23 +33,6 @@ class SegmentCyst(pl.LightningModule):
 
         self.model_name = self.hparams.model.get("name", "").lower()
         self.model = object_from_dict(hparams["model"])
-
-        # classifier settings
-        if self.hparams.classifier == "RES2NET":
-            self.classifier = res2net50(pretrained=True)
-            self.classifier.fc = torch.nn.Linear(2048, 2)  # changing the number of output classes to 2
-            self.classifier.conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3,bias=False) # input channels set to 4
-
-        if self.hparams.classifier == "EFFICIENTNET":
-            self.classifier = EfficientNet.from_pretrained('efficientnet-b5', num_classes=2)
-
-        if self.hparams.c_loss == "CE":
-            self.weight = torch.tensor([0.1, 1.50]) # class 0, class 1 
-            self.loss_classifier = torch.nn.CrossEntropyLoss(weight=self.weight)
-
-        if self.hparams.c_loss == "Focal":
-            self.loss_classifier = FocalLoss(gamma = self.hparams.gamma, alpha=self.hparams.alpha)
-        # end classifier setings 
             
         self.train_images = (
             Path(self.hparams.checkpoint_callback["dirpath"])
@@ -105,18 +88,13 @@ class SegmentCyst(pl.LightningModule):
             return self.model(batch)
 
     def configure_optimizers(self):
-        #choosing a optimizer for classifier
-        c_optimizer = torch.optim.Adam(self.parameters() , lr = 1e-4)
-        #choosing LR scheduler for classifier
-        c_sch = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer = c_optimizer, T_0 = 10, T_mult = 2)
-
         # choosing a optimizer for sementation model
         s_optimizer = torch.optim.Adam(self.parameters(), lr = 1e-4)
         decay_epoch = 1  # how many epochs have to pass before changing the LR
         lambda1 = lambda epoch: 0.1 ** (epoch // decay_epoch)
         s_sch = torch.optim.lr_scheduler.LambdaLR(optimizer=s_optimizer, lr_lambda=lambda1)
 
-        return ({"optimizer": s_optimizer, "lr_scheduler": s_sch}, {"optimizer": c_optimizer, "lr_scheduler": c_sch})
+        return ({"optimizer": s_optimizer, "lr_scheduler": s_sch})
 
     def log_images(self, features, masks, logits_, batch_idx, rate):
         # logits_ is the output of the last layer of the model
@@ -180,13 +158,10 @@ class SegmentCyst(pl.LightningModule):
             )
 
     def on_train_epoch_start(self):
-        # create dataset folder for current epoch
-        self.refined_results_folder = f"refined_images/train_epoch_{self.trainer.current_epoch}"
-        Path(self.refined_results_folder).mkdir(parents=True, exist_ok=True)
         self.epoch_start_time.append(time())
 
     def get_segmentation_lr(self):
-        s_optimizer, c_optimizer = self.optimizers() # optimizer = self.optimizers()
+        s_optimizer= self.optimizers() # optimizer = self.optimizers()
         for param_group in s_optimizer.param_groups: # for param_group in optimizer.param_group
             return param_group["lr"]
         
@@ -214,9 +189,8 @@ class SegmentCyst(pl.LightningModule):
     
             #optimizer = self.optimizers()
             #optimizer.zero_grad()
-            s_optimizer, c_optimizer = self.optimizers()
+            s_optimizer = self.optimizers()
             s_optimizer.zero_grad()
-            c_optimizer.zero_grad()
             # ---- data prepare ----
             images = features.float()
             gts = masks
@@ -259,39 +233,10 @@ class SegmentCyst(pl.LightningModule):
             else:
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
-
-            patches, labels = unfold_patches(gts,images,logits, size = self.patch_size, stride = self.patch_size)
-    
-            # compute classifier predictions/logits
-            classifier_predictions = self.classifier(patches) # pass patches excluding the first empty one, classifier_predictions has shape (N,2), contains logits/probabilities for each class
-            
-            # get predicted labels from classifier logits
-            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-            
-            # compute classifier loss over all patches in current batch
-            if self.hparams.c_loss == "CE":
-                classifier_loss = self.loss_classifier(classifier_predictions, labels)
-            if self.hparams.c_loss == "Focal":
-               classifier_loss = self.loss_classifier(classifier_predictions, labels)
-
-            # training loss
-            loss = segmentation_loss + classifier_loss # both computed over batch images and patches
-
-            # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size = self.patch_size, stride = self.patch_size)
-            #refined_predictions = refine_predicted_masks(logits, coordinates, patch_each_image, predicted_labels)
-
-            if self.hparams.debug:
-                print("Predicted labels:")
-                print(predicted_labels)
-                print("True Labels:")
-                print(labels)
-            
+  
             self.log_dict(
                 {
-                    "segmentation_loss": segmentation_loss,
-                    "classifier_loss": classifier_loss,
-                    "train_loss": loss,
+                "train_loss": segmentation_loss,
                 }, 
                 on_step=False,
                 on_epoch=True,
@@ -300,7 +245,7 @@ class SegmentCyst(pl.LightningModule):
 
             # passare la refined mask (logits) oppure (refined_mask > 0.5)? -> passare le logits, il thresholding lo fa gia la metric da sola
             for metric_name, metric in self.train_metrics.items():
-                metric(refined_predictions, gts.int())
+                metric(logits, gts.int())
                 self.log(
                     f"train_{metric_name}",
                     metric,
@@ -309,13 +254,10 @@ class SegmentCyst(pl.LightningModule):
                     prog_bar=True,
                 )
 
-            self.manual_backward(loss)
+            self.manual_backward(segmentation_loss)
 
             #self.clip_gradients(optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
             self.clip_gradients(s_optimizer, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
-            self.clip_gradients(c_optimizer,gradient_clip_val=0.5, gradient_clip_algorithm="norm")
-            
-            c_optimizer.step()
             s_optimizer.step()
 
             # scheduler step after each optimizer.step(), i.e. one for each batch in each resize
@@ -325,18 +267,9 @@ class SegmentCyst(pl.LightningModule):
         # scheduler step after entire batch (after for loop on rates for each batch)
         # sch = self.lr_schedulers()
         # sch.step()
-        s_sch, c_sch = self.lr_schedulers()
-        c_sch.step()
-
-        # save first image of current batch every 5 batch, not all batch because it would saturate colab memory
-        if batch_idx % 5 == 0:
-                save_images(masks[:1],logits[:1], refined_predictions[:1],f"batch_idx_{batch_idx:03}",Path(self.refined_results_folder))
-
 
         return {
-                "segmentation_loss": segmentation_loss,
-                "classifier_loss": classifier_loss,
-                "train_loss": loss
+                "train_loss": segmentation_loss
                 }
 
     def validation_step(self, batch, batch_id):
@@ -390,39 +323,16 @@ class SegmentCyst(pl.LightningModule):
                 logits = self.forward(images)
                 segmentation_loss = self.loss(logits, gts)
 
-            patches, labels = unfold_patches(gts,images,logits, size=self.patch_size, stride=self.patch_size) # here labels are used only to compute validation loss
-    
-            # compute classifier predictions/logits
-            classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
             
-            # get predicted labels from classifier logits
-            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-            
-            # compute classifier loss over all patches in current batch
-            if self.hparams.c_loss == "CE":
-                classifier_loss = self.loss_classifier(classifier_predictions, labels)
-            if self.hparams.c_loss == "Focal":
-                classifier_loss = self.loss_classifier(classifier_predictions, labels)
-
-            # training loss
-            loss = segmentation_loss + classifier_loss # both computed over batch images and patches
-
-            # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=self.patch_size, stride=self.patch_size)
-
-        self.log_dict({"val_segmentation_loss": segmentation_loss,
-                    "val_classifier_loss": classifier_loss,
-                    "val_loss": loss}, 
+        self.log_dict({
+                    "val_loss": segmentation_loss}, 
                     on_step=False,
                     on_epoch=True,
                     prog_bar=True,)
        
         for metric_name, metric in self.val_metrics.items():
-            metric(refined_predictions, gts.int()) # compute metrics on refined masks
+            metric(logits, gts.int()) # compute metrics on refined masks
             self.log(f"val_{metric_name}", metric, on_step=False, on_epoch=True)
-        
-        save_images(gts[:1],logits[:1], refined_predictions[:1],f"val_batch_idx_{batch_id:03}",Path(self.refined_results_folder))
-
 
     def test_step(self, batch, batch_id):
         features = batch["features"]
@@ -476,23 +386,10 @@ class SegmentCyst(pl.LightningModule):
             else:
                 logits = self.forward(images)
 
-            patches = unfold_patches(gts, images, logits, test=True, size=self.patch_size, stride = self.patch_size) # here labels are used only to compute validation loss
-    
-            # compute classifier predictions/logits
-            classifier_predictions = self.classifier(patches) # classifier_predictions has shape (N,2), contains logits/probabilities for each class
-            
-            # get predicted labels from classifier logits
-            predicted_labels = torch.max(classifier_predictions, 1)[1]  # compute from raw score (logits) predictions for all patches expressed as class labels (0 or 1)
-
-            # refine predictions
-            refined_predictions = refine_predictions_unfolding(logits, predicted_labels, size=self.patch_size, stride=self.patch_size)
-
-            save_images(gts[:1],logits[:1], refined_predictions[:1],f"test_idx_{batch_id:03}",Path(self.refined_results_folder_test))
-
         for i in range(features.shape[0]):
             name = batch["image_id"][i]
             p = logits[i][0]
-            logits_ = refined_predictions[i][0] #refined masks
+            logits_ = p[i][0] #refined masks
             mask = masks[i][0] #gt masks
 
            
@@ -508,5 +405,5 @@ class SegmentCyst(pl.LightningModule):
 
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
-            metric(refined_predictions, gts.int())
+            metric(logits, gts.int())
             self.log(f"test_{metric_name}", metric, on_step=True, on_epoch=True)
