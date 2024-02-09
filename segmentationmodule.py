@@ -385,23 +385,22 @@ class SegmentCyst(pl.LightningModule):
 
             else:
                 logits = self.forward(images)
-        #
-        #for i in range(features.shape[0]):
-        #    name = batch["image_id"][i]
-        #    p = logits[i][0]
-        #    logits_ = p[i][0] #refined masks
-        #    mask = masks[i][0] #gt masks
-
-        #   
-        #    logits_ = (
-        #        logits_.cpu().numpy() > self.hparams.test_parameters["threshold"]
-        #    ).astype(np.uint8)
-        #    Image.fromarray(logits_ * 255).save(
-        #        self.hparams.checkpoint_callback["dirpath"]
-        #        / "result"
-        #        / "test"
-        #        / f"{name}.png"
-        #    )
+        
+        for i in range(features.shape[0]):
+            name = batch["image_id"][i]
+            p = logits[i][0]
+            logits_ = logits[i][0] #mask
+            mask = masks[i][0] #gt masks
+           
+            logits_ = (
+                logits_.cpu().numpy() > self.hparams.test_parameters["threshold"]
+            ).astype(np.uint8)
+            Image.fromarray(logits_ * 255).save(
+                self.hparams.checkpoint_callback["dirpath"]
+                / "result"
+                / "test"
+                / f"{name}.png"
+            )
  
         self.timing_result.loc[len(self.timing_result)] = timing
         for metric_name, metric in self.test_metrics.items():
