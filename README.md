@@ -1,3 +1,5 @@
+# Final version in this branch!
+
 # Info
 In this branch a sequence of segmentation model and cyst classifier is implemented in order to train the two models together.
 Patch extraction is perfomed using unfold method in order to gain performances and keep gradient calculations correct, without interruptions.
@@ -15,3 +17,4 @@ Other classifier are available.
 - Focal Loss. Alpha = 0.1, Gamma = 2.0
 - Patch size = 128
 - Res2Net(pretrained) as classifier
+
